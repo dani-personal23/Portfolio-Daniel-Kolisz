@@ -142,8 +142,10 @@
   }
   .case-section-title { font-size: 1.05rem; font-weight: 700; margin: 26px 0 12px 0; }
   .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .gallery-grid img { width: 100%; height: auto; border-radius: 10px; display: block; cursor: pointer; transition: opacity 0.2s ease; }
-  .gallery-grid img:hover { opacity: 0.85; }
+  .gallery-card { background: var(--card2); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .gallery-card img { width: 100%; height: auto; display: block; cursor: pointer; transition: opacity 0.2s ease; }
+  .gallery-card img:hover { opacity: 0.85; }
+  .gallery-card-title { padding: 8px 10px; font-size: 0.78rem; color: var(--text); font-weight: 600; }
   .map-embed-wrap {
     border-radius: 14px; overflow: hidden; border: 1px solid var(--border); background: var(--card);
   }
@@ -170,6 +172,16 @@
     color: var(--muted); font-size: 0.82rem; cursor: pointer;
   }
   .upload-preview { width: 100%; border-radius: 12px; margin-top: 10px; display: block; }
+  .list-item-editor {
+    background: var(--card2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px; margin-bottom: 10px;
+  }
+  .list-item-editor input, .list-item-editor textarea {
+    width: 100%; background: var(--card); border: 1px solid var(--border);
+    color: var(--text); padding: 9px 10px; border-radius: 8px; font-size: 0.85rem;
+    font-family: inherit; margin-bottom: 8px;
+  }
+  .list-item-editor .danger-btn { margin-top: 0; }
   .gallery-preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
   .gallery-preview-grid img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; }
   .gallery-thumb-wrap { position: relative; }
@@ -212,7 +224,9 @@
     display: flex; align-items: center; justify-content: center;
     padding: 40px;
   }
-  .lightbox-img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; }
+  .lightbox-content { display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 100%; max-height: 100%; }
+  .lightbox-img { max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: 6px; }
+  .lightbox-caption { color: #eee; font-size: 0.85rem; text-align: center; display: none; }
   .lightbox-close {
     position: fixed; top: calc(16px + env(safe-area-inset-top)); right: 16px;
     width: 40px; height: 40px; border-radius: 50%;
@@ -366,6 +380,7 @@
     display: inline-flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border);
     border-radius: 30px; padding: 11px 20px; color: var(--text); text-decoration: none; font-size: 0.85rem; font-weight: 600;
     transition: border-color 0.2s ease, transform 0.15s ease;
+    font-family: inherit; cursor: pointer;
   }
   .contact-link:hover { border-color: var(--accent-bright); transform: translateY(-1px); }
   .site-footer { text-align: center; color: var(--muted); font-size: 0.75rem; padding: 30px 14px 10px 14px; }
@@ -471,7 +486,10 @@
 <div id="lightbox" class="lightbox" style="display:none;">
   <button class="lightbox-close" id="lightboxClose">✕</button>
   <button class="lightbox-arrow lightbox-prev" id="lightboxPrev">‹</button>
-  <img id="lightboxImg" class="lightbox-img" src="" alt="">
+  <div class="lightbox-content">
+    <img id="lightboxImg" class="lightbox-img" src="" alt="">
+    <div id="lightboxCaption" class="lightbox-caption"></div>
+  </div>
   <button class="lightbox-arrow lightbox-next" id="lightboxNext">›</button>
 </div>
 
@@ -838,10 +856,17 @@ function renderHome(app) {
 let lightboxImages = [];
 let lightboxIndex = 0;
 
+function updateLightboxSlide() {
+  const item = lightboxImages[lightboxIndex];
+  document.getElementById('lightboxImg').src = item.url;
+  const caption = document.getElementById('lightboxCaption');
+  caption.textContent = item.title || "";
+  caption.style.display = item.title ? "block" : "none";
+}
 function openLightbox(images, index) {
-  lightboxImages = images;
+  lightboxImages = images.map(g => typeof g === "string" ? { url: g, title: "" } : g);
   lightboxIndex = index;
-  document.getElementById('lightboxImg').src = lightboxImages[lightboxIndex];
+  updateLightboxSlide();
   document.getElementById('lightbox').style.display = "flex";
   const multiple = lightboxImages.length > 1;
   document.getElementById('lightboxPrev').style.display = multiple ? "flex" : "none";
@@ -852,7 +877,7 @@ function closeLightbox() {
 }
 function lightboxStep(delta) {
   lightboxIndex = (lightboxIndex + delta + lightboxImages.length) % lightboxImages.length;
-  document.getElementById('lightboxImg').src = lightboxImages[lightboxIndex];
+  updateLightboxSlide();
 }
 document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
 document.getElementById('lightboxPrev').addEventListener('click', () => lightboxStep(-1));
@@ -865,6 +890,12 @@ document.addEventListener('keydown', (e) => {
   if (e.key === "Escape") closeLightbox();
   if (e.key === "ArrowLeft") lightboxStep(-1);
   if (e.key === "ArrowRight") lightboxStep(1);
+});
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.contact-link-email');
+  if (btn) {
+    navigator.clipboard.writeText(btn.dataset.email).then(() => showToast("📋 Email copiado al portapapeles"));
+  }
 });
 
 function normalizeUrl(u) {
@@ -882,7 +913,7 @@ function shortenText(text, maxLen) {
 function siteFooterHtml(profile) {
   let contactLinks = "";
   if (profile.linkedin) contactLinks += `<a class="contact-link" href="${escapeAttr(normalizeUrl(profile.linkedin))}" target="_blank" rel="noopener">LinkedIn</a>`;
-  if (profile.email) contactLinks += `<a class="contact-link" href="mailto:${escapeAttr(profile.email)}">${escapeHtml(profile.email)}</a>`;
+  if (profile.email) contactLinks += `<button type="button" class="contact-link contact-link-email" data-email="${escapeAttr(profile.email)}">${escapeHtml(profile.email)}</button>`;
   if (profile.github) contactLinks += `<a class="contact-link" href="${escapeAttr(normalizeUrl(profile.github))}" target="_blank" rel="noopener">GitHub</a>`;
   return `
     <section class="contact-section">
@@ -1140,8 +1171,8 @@ function renderDetail(app) {
     <section class="page-section" id="accordionContent" style="display:none;">
       ${p.description ? `<p class="case-desc">${escapeHtml(p.description)}</p>` : ""}
       ${p.techStack && p.techStack.length ? `<div class="tech-row">${p.techStack.map(t => `<span class="tech-chip">${escapeHtml(t)}</span>`).join('')}</div>` : ""}
-      ${p.gallery && p.gallery.length ? `<div class="case-section-title">Galería</div><div class="gallery-grid">${p.gallery.map((g, i) => `<img src="${g}" alt="" class="gallery-img-click" data-idx="${i}">`).join('')}</div>` : ""}
-      ${p.codeSnippet ? `<div class="case-section-title">Código</div><pre class="code-block"><code>${escapeHtml(p.codeSnippet)}</code></pre>` : ""}
+      ${p.gallery && p.gallery.length ? `<div class="case-section-title">Galería</div><div class="gallery-grid">${p.gallery.map((g, i) => { const item = typeof g === "string" ? { url: g, title: "" } : g; return `<div class="gallery-card"><img src="${item.url}" alt="" class="gallery-img-click" data-idx="${i}">${item.title ? `<div class="gallery-card-title">${escapeHtml(item.title)}</div>` : ""}</div>`; }).join('')}</div>` : ""}
+      ${(p.codeBlocks && p.codeBlocks.length) ? p.codeBlocks.map(cb => `<div class="case-section-title">${escapeHtml(cb.title || "Código")}</div><pre class="code-block"><code>${escapeHtml(cb.code)}</code></pre>`).join('') : (p.codeSnippet ? `<div class="case-section-title">Código</div><pre class="code-block"><code>${escapeHtml(p.codeSnippet)}</code></pre>` : "")}
       <div class="detail-links-row">
         ${p.pdfUrl ? `<a class="pdf-btn" href="${escapeAttr(p.pdfUrl)}" target="_blank" rel="noopener">📄 Documento PDF</a>` : ""}
         ${p.codeUrl ? `<a class="pdf-btn" href="${escapeAttr(p.codeUrl)}" target="_blank" rel="noopener">💻 Código del proyecto</a>` : ""}
@@ -1322,7 +1353,13 @@ function renderProfileForm(app) {
 function renderForm(app) {
   const projects = loadProjects();
   const existing = editingId ? projects.find(p => p.id === editingId) : null;
-  const data = existing || { title: "", category: "", date: "", description: "", techStack: [], cover: "", gallery: [], mapUrl: "", videoUrl: "", pdfUrl: "", codeUrl: "", codeSnippet: "", supervisor: "", affiliation: "", partners: "", featured: false };
+  const data = existing || { title: "", category: "", date: "", description: "", techStack: [], cover: "", gallery: [], mapUrl: "", videoUrl: "", pdfUrl: "", codeUrl: "", codeBlocks: [], supervisor: "", affiliation: "", partners: "", featured: false };
+
+  let codeBlocksData = (data.codeBlocks && data.codeBlocks.length)
+    ? data.codeBlocks.map(cb => ({ title: cb.title || "", code: cb.code || "" }))
+    : (data.codeSnippet ? [{ title: "", code: data.codeSnippet }] : []);
+
+  let galleryData = (data.gallery || []).map(g => typeof g === "string" ? { url: g, title: "" } : { url: g.url || "", title: g.title || "" });
 
   const categories = Array.from(new Set(projects.map(p => p.category).filter(Boolean)));
 
@@ -1356,8 +1393,9 @@ function renderForm(app) {
     </div>
 
     <div class="field">
-      <label>Rutas o URLs de fotos de galería (una por línea)</label>
-      <textarea id="fGallery" placeholder="images/mi-proyecto-1.jpg&#10;images/mi-proyecto-2.jpg">${escapeHtml((data.gallery || []).join('\n'))}</textarea>
+      <label>Galería de fotos (con título opcional para cada una)</label>
+      <div id="galleryWrap"></div>
+      <button type="button" class="secondary-btn" id="addGalleryBtn">+ Añadir foto a la galería</button>
     </div>
 
     <div class="field">
@@ -1377,8 +1415,9 @@ function renderForm(app) {
       <input type="url" id="fCodeUrl" value="${escapeAttr(data.codeUrl)}" placeholder="https://github.com/...">
     </div>
     <div class="field">
-      <label>Código a mostrar en la página del proyecto (opcional, solo se muestra como texto, nunca se ejecuta)</label>
-      <textarea id="fCodeSnippet" placeholder="Pega aquí el código..." style="font-family: monospace; min-height: 140px;">${escapeHtml(data.codeSnippet)}</textarea>
+      <label>Bloques de código a mostrar (opcional, solo se muestra como texto, nunca se ejecuta)</label>
+      <div id="codeBlocksWrap"></div>
+      <button type="button" class="secondary-btn" id="addCodeBlockBtn">+ Añadir bloque de código</button>
     </div>
     <div class="field">
       <label>Supervisor (opcional)</label>
@@ -1411,6 +1450,38 @@ function renderForm(app) {
     else { prev.style.display = "none"; }
   });
 
+  function renderGalleryUI() {
+    const wrap = document.getElementById('galleryWrap');
+    wrap.innerHTML = galleryData.map((g, i) => `
+      <div class="list-item-editor" data-idx="${i}">
+        <input type="text" class="g-url" value="${escapeAttr(g.url)}" placeholder="images/foto.jpg">
+        <input type="text" class="g-title" value="${escapeAttr(g.title)}" placeholder="Título de la foto (opcional)">
+        <button type="button" class="danger-btn g-remove">Eliminar foto</button>
+      </div>
+    `).join('');
+    wrap.querySelectorAll('.g-url').forEach((inp, i) => inp.addEventListener('input', () => { galleryData[i].url = inp.value; }));
+    wrap.querySelectorAll('.g-title').forEach((inp, i) => inp.addEventListener('input', () => { galleryData[i].title = inp.value; }));
+    wrap.querySelectorAll('.g-remove').forEach((btn, i) => btn.addEventListener('click', () => { galleryData.splice(i, 1); renderGalleryUI(); }));
+  }
+  renderGalleryUI();
+  document.getElementById('addGalleryBtn').addEventListener('click', () => { galleryData.push({ url: "", title: "" }); renderGalleryUI(); });
+
+  function renderCodeBlocksUI() {
+    const wrap = document.getElementById('codeBlocksWrap');
+    wrap.innerHTML = codeBlocksData.map((cb, i) => `
+      <div class="list-item-editor" data-idx="${i}">
+        <input type="text" class="cb-title" value="${escapeAttr(cb.title)}" placeholder="Título del bloque (ej. Código del gráfico)">
+        <textarea class="cb-code" style="font-family: monospace; min-height: 120px;" placeholder="Pega aquí el código...">${escapeHtml(cb.code)}</textarea>
+        <button type="button" class="danger-btn cb-remove">Eliminar este bloque</button>
+      </div>
+    `).join('');
+    wrap.querySelectorAll('.cb-title').forEach((inp, i) => inp.addEventListener('input', () => { codeBlocksData[i].title = inp.value; }));
+    wrap.querySelectorAll('.cb-code').forEach((ta, i) => ta.addEventListener('input', () => { codeBlocksData[i].code = ta.value; }));
+    wrap.querySelectorAll('.cb-remove').forEach((btn, i) => btn.addEventListener('click', () => { codeBlocksData.splice(i, 1); renderCodeBlocksUI(); }));
+  }
+  renderCodeBlocksUI();
+  document.getElementById('addCodeBlockBtn').addEventListener('click', () => { codeBlocksData.push({ title: "", code: "" }); renderCodeBlocksUI(); });
+
   document.getElementById('saveBtn').addEventListener('click', async () => {
     const title = document.getElementById('fTitle').value.trim();
     if (!title) { showToast("⚠️ Falta el título del proyecto"); return; }
@@ -1422,12 +1493,12 @@ function renderForm(app) {
       description: document.getElementById('fDesc').value.trim(),
       techStack: document.getElementById('fTech').value.split(',').map(s => s.trim()).filter(Boolean),
       cover: document.getElementById('fCover').value.trim(),
-      gallery: document.getElementById('fGallery').value.split('\n').map(s => s.trim()).filter(Boolean),
+      gallery: galleryData.filter(g => g.url && g.url.trim()).map(g => ({ url: g.url.trim(), title: g.title.trim() })),
       mapUrl: normalizeUrl(document.getElementById('fMapUrl').value.trim()),
       videoUrl: normalizeUrl(document.getElementById('fVideoUrl').value.trim()),
       pdfUrl: normalizeUrl(document.getElementById('fPdfUrl').value.trim()),
       codeUrl: normalizeUrl(document.getElementById('fCodeUrl').value.trim()),
-      codeSnippet: document.getElementById('fCodeSnippet').value,
+      codeBlocks: codeBlocksData.filter(cb => cb.code && cb.code.trim()).map(cb => ({ title: cb.title.trim(), code: cb.code })),
       supervisor: document.getElementById('fSupervisor').value.trim(),
       affiliation: document.getElementById('fAffiliation').value.trim(),
       partners: document.getElementById('fPartners').value.trim(),
