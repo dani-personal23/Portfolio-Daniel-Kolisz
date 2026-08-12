@@ -339,11 +339,11 @@
     border-radius: 18px; overflow: hidden; background: var(--card);
   }
   @media (min-width: 720px) { .carousel-slide { grid-template-columns: 1.1fr 1fr; } }
-  .carousel-img { width: 100%; height: auto; display: block; }
-  .carousel-info { padding: 26px 26px 30px 26px; display: flex; flex-direction: column; justify-content: center; }
-  .carousel-cat { color: var(--accent); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-  .carousel-title { font-size: 1.35rem; font-weight: 800; margin: 8px 0 10px 0; }
-  .carousel-desc { color: var(--muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 18px; max-height: 4.8em; overflow: hidden; }
+  .carousel-img { width: 100%; max-height: 320px; object-fit: contain; display: block; background: var(--card2); }
+  .carousel-info { padding: 20px 24px 24px 24px; display: flex; flex-direction: column; justify-content: center; }
+  .carousel-cat { color: var(--accent); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .carousel-title { font-size: 1.15rem; font-weight: 800; margin: 6px 0 8px 0; line-height: 1.25; }
+  .carousel-desc { color: var(--muted); font-size: 0.85rem; line-height: 1.55; margin-bottom: 14px; }
   .carousel-link {
     color: var(--accent-bright); font-size: 0.8rem; font-weight: 700; text-decoration: none;
     cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: gap 0.2s ease, color 0.2s ease;
@@ -718,9 +718,7 @@ function render() {
 let carouselIndex = 0;
 
 function getFeaturedProjects(projects) {
-  const marked = projects.filter(p => p.featured);
-  if (marked.length > 0) return marked;
-  return projects.slice().sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 4);
+  return projects.filter(p => p.featured);
 }
 
 function navBarHtml(activeView) {
@@ -763,7 +761,7 @@ function renderHome(app) {
   const profile = loadProfile();
   const featured = getFeaturedProjects(projects);
   if (carouselIndex >= featured.length) carouselIndex = 0;
-  const latest = projects.slice().sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 6);
+  const latest = projects.slice().sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 3);
 
   const heroHtml = `
     <section class="hero-section" id="hero">
@@ -907,7 +905,7 @@ function renderCarousel(featured) {
         <div class="carousel-info">
           ${p.category ? `<div class="carousel-cat">${escapeHtml(p.category)}</div>` : ""}
           <div class="carousel-title serif">${escapeHtml(p.title)}</div>
-          <div class="carousel-desc">${escapeHtml(p.description || "")}</div>
+          <div class="carousel-desc">${escapeHtml(shortenText(p.description || "", 200))}</div>
           <a class="carousel-link" data-id="${p.id}">Ver proyecto completo →</a>
         </div>
       </div>
