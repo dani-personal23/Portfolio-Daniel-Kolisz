@@ -16,18 +16,20 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --bg: #030303;
-    --card: #0c0c0c;
-    --card2: #111111;
-    --border: #1f1f1f;
-    --text: #f0efec;
-    --muted: #8f8d86;
-    --accent: #b8874a;
-    --accent-bright: #d9a75c;
-    --accent-soft: rgba(184,135,74,0.12);
-    --red: #c9584d;
+    --bg: #0e1520;
+    --card: #16202f;
+    --card2: #1c2838;
+    --border: #2a3648;
+    --text: #f3ede2;
+    --muted: #9aa3b5;
+    --accent: #c6a75e;
+    --accent-bright: #d9bd7c;
+    --accent-soft: rgba(198,167,94,0.14);
+    --beige: #e8dcc8;
+    --navy: #1f2a44;
+    --red: #e2665a;
   }
-  html { background: #050505; }
+  html { background: #0e1520; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
     margin: 0;
@@ -71,8 +73,10 @@
   .filter-chip {
     flex: 0 0 auto; background: var(--card); border: 1px solid var(--border);
     color: var(--muted); border-radius: 20px; padding: 7px 14px; font-size: 0.78rem; font-weight: 600;
+    transition: border-color 0.2s ease, color 0.2s ease;
   }
-  .filter-chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .filter-chip:hover { border-color: var(--accent-bright); color: var(--text); }
+  .filter-chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-bright); }
 
   /* ---- Masonry grid ---- */
   .masonry { column-count: 2; column-gap: 10px; max-width: 1400px; margin: 0 auto; }
@@ -82,7 +86,9 @@
   .tile {
     break-inside: avoid; margin-bottom: 10px; border-radius: 14px; overflow: hidden;
     position: relative; background: var(--card); border: 1px solid var(--border);
+    transition: border-color 0.2s ease, transform 0.2s ease;
   }
+  .tile:hover { border-color: var(--accent); transform: translateY(-2px); }
   .tile img { width: 100%; display: block; }
   .tile-noimg { aspect-ratio: 4/5; display:flex; align-items:center; justify-content:center; color: var(--muted); font-size: 0.75rem; padding: 16px; text-align:center; }
   .tile-overlay {
@@ -97,10 +103,12 @@
   .fab {
     position: fixed; right: calc(20px + env(safe-area-inset-right)); bottom: calc(24px + env(safe-area-inset-bottom));
     width: 58px; height: 58px; border-radius: 50%;
-    background: var(--accent); color: #000; font-size: 1.8rem; font-weight: 700;
-    border: none; box-shadow: 0 8px 24px rgba(207,157,79,0.35);
+    background: var(--accent); color: #fff; font-size: 1.8rem; font-weight: 700;
+    border: none; box-shadow: 0 8px 24px rgba(198,167,94,0.4);
     display: flex; align-items: center; justify-content: center; line-height: 0;
+    transition: background 0.2s ease, transform 0.15s ease;
   }
+  .fab:hover { background: var(--accent-bright); transform: scale(1.05); }
 
   /* ---- Case study (project detail) ---- */
   .case-hero {
@@ -161,17 +169,23 @@
     background: rgba(0,0,0,0.75); color: #fff; border: none; font-size: 0.7rem; line-height: 1;
   }
   .primary-btn {
-    width: 100%; background: var(--accent); color: #000; border: none; font-weight: 800;
+    width: 100%; background: var(--accent); color: #fff; border: none; font-weight: 800;
     padding: 13px; border-radius: 12px; font-size: 0.95rem; margin-top: 6px;
+    transition: background 0.2s ease, transform 0.15s ease;
   }
+  .primary-btn:hover { background: var(--accent-bright); transform: translateY(-1px); }
   .secondary-btn {
     width: 100%; background: transparent; color: var(--text); border: 1px solid var(--border);
     padding: 12px; border-radius: 12px; font-size: 0.85rem; margin-top: 10px; font-weight: 600;
+    transition: border-color 0.2s ease;
   }
+  .secondary-btn:hover { border-color: var(--accent-bright); color: var(--accent-bright); }
   .danger-btn {
     width: 100%; background: transparent; color: var(--red); border: 1px solid var(--red);
     padding: 12px; border-radius: 12px; font-size: 0.85rem; margin-top: 10px; font-weight: 700;
+    transition: background 0.2s ease;
   }
+  .danger-btn:hover { background: rgba(226,102,90,0.12); }
 
   #toast {
     position: fixed; left: 50%; top: -80px; transform: translateX(-50%);
@@ -202,40 +216,73 @@
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
   }
   .nav-logo { font-size: 1.05rem; font-weight: 700; white-space: nowrap; }
-  .nav-links { display: flex; gap: 4px; overflow-x: auto; flex: 1; justify-content: center; }
   .nav-link {
-    color: var(--muted); text-decoration: none; font-size: 0.82rem; font-weight: 600;
-    padding: 8px 12px; border-radius: 20px; white-space: nowrap; cursor: pointer;
+    color: var(--muted); text-decoration: none; font-size: 0.82rem; font-weight: 700;
+    padding: 8px 4px; white-space: nowrap; cursor: pointer; position: relative;
+    text-transform: uppercase; letter-spacing: 0.4px;
   }
-  .nav-link:hover { color: var(--text); background: var(--card2); }
+  .nav-link::after {
+    content: ""; position: absolute; left: 0; right: 100%; bottom: 2px; height: 2px;
+    background: var(--accent-bright); transition: right 0.25s ease;
+  }
+  .nav-link:hover { color: var(--text); }
+  .nav-link:hover::after { right: 0; }
+  .nav-links { display: flex; gap: 22px; overflow-x: auto; flex: 1; justify-content: center; }
   .admin-pill {
     background: var(--card2); border: 1px solid var(--border); color: var(--accent-bright);
     border-radius: 20px; padding: 8px 14px; font-size: 0.78rem; font-weight: 700; white-space: nowrap;
+    transition: border-color 0.2s ease;
   }
+  .admin-pill:hover { border-color: var(--accent-bright); }
 
   /* ---- Hero ---- */
   .hero-section {
-    min-height: 78vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 60px 20px; position: relative;
-    background: radial-gradient(ellipse at top, rgba(184,135,74,0.08), transparent 60%);
+    position: relative;
+    min-height: 62vh;
+    display: flex; align-items: center;
+    background: var(--card);
+    overflow: hidden;
   }
+  .hero-bg {
+    position: absolute; top: 0; right: 0; bottom: 0; left: 38%;
+    background-size: cover; background-position: center;
+  }
+  .hero-bg::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(100deg, var(--card) 0%, rgba(22,32,47,0.6) 30%, rgba(198,167,94,0.16) 100%);
+  }
+  @media (max-width: 720px) { .hero-bg { left: 0; opacity: 0.35; } }
+  .hero-card {
+    position: relative; z-index: 2;
+    max-width: 560px; margin: 40px 0 40px 4px;
+    background: rgba(10,11,16,0.72);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 42px 38px;
+  }
+  @media (min-width: 720px) { .hero-card { margin-left: 24px; padding: 50px 46px; } }
   .hero-photo-wrap {
-    width: 118px; height: 118px; border-radius: 50%; overflow: hidden;
-    border: 2px solid var(--accent); margin-bottom: 22px;
+    width: 84px; height: 84px; border-radius: 50%; overflow: hidden;
+    border: 2px solid var(--accent); margin-bottom: 20px;
     display: flex; align-items: center; justify-content: center; background: var(--card2);
-    font-size: 2.2rem; color: var(--muted);
+    font-size: 1.8rem; color: var(--muted);
   }
   .hero-photo-wrap img { width: 100%; height: 100%; object-fit: cover; }
-  .hero-name { font-size: clamp(2rem, 6vw, 3.4rem); font-weight: 800; margin: 0 0 10px 0; line-height: 1.1; }
-  .hero-tagline { color: var(--muted); font-size: clamp(0.95rem, 2vw, 1.15rem); max-width: 560px; margin-bottom: 30px; }
+  .hero-name { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; margin: 0 0 16px 0; line-height: 1.1; color: var(--text); }
+  .hero-tagline { color: #cfd1db; font-size: clamp(0.95rem, 1.6vw, 1.05rem); line-height: 1.6; margin-bottom: 30px; }
   .hero-cta {
-    background: var(--accent); color: #0a0a0a; border: none; font-weight: 800;
-    padding: 13px 28px; border-radius: 30px; font-size: 0.92rem; cursor: pointer;
+    background: transparent; color: var(--text); border: 1.5px solid var(--accent-bright); font-weight: 700;
+    padding: 13px 30px; border-radius: 30px; font-size: 0.88rem; cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
   }
+  .hero-cta:hover { background: var(--accent); color: #fff; transform: translateY(-1px); }
   .edit-profile-btn {
-    position: absolute; bottom: 18px; right: 18px; background: var(--card2); border: 1px solid var(--border);
+    position: absolute; bottom: 18px; right: 18px; z-index: 3; background: var(--card2); border: 1px solid var(--border);
     color: var(--muted); border-radius: 20px; padding: 7px 14px; font-size: 0.72rem; font-weight: 600;
+    transition: color 0.2s ease, border-color 0.2s ease;
   }
+  .edit-profile-btn:hover { color: var(--accent-bright); border-color: var(--accent-bright); }
 
   /* ---- Generic sections ---- */
   .section-heading { font-size: clamp(1.3rem, 3vw, 1.8rem); font-weight: 800; margin: 0 0 20px 0; }
@@ -265,9 +312,11 @@
   .carousel-arrow {
     width: 38px; height: 38px; border-radius: 50%; background: var(--card2); border: 1px solid var(--border);
     color: var(--text); font-size: 1rem; display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.2s ease, background 0.2s ease;
   }
+  .carousel-arrow:hover { border-color: var(--accent-bright); background: var(--accent-soft); }
   .carousel-dots { display: flex; gap: 6px; }
-  .carousel-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+  .carousel-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); cursor: pointer; }
   .carousel-dot.active { background: var(--accent); width: 20px; border-radius: 4px; }
 
   /* ---- Contact ---- */
@@ -275,8 +324,91 @@
   .contact-link {
     display: inline-flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border);
     border-radius: 30px; padding: 11px 20px; color: var(--text); text-decoration: none; font-size: 0.85rem; font-weight: 600;
+    transition: border-color 0.2s ease, transform 0.15s ease;
   }
+  .contact-link:hover { border-color: var(--accent-bright); transform: translateY(-1px); }
   .site-footer { text-align: center; color: var(--muted); font-size: 0.75rem; padding: 30px 14px 10px 14px; }
+  .nav-link.active { color: var(--accent-bright); }
+  .nav-link.active::after { right: 0; background: var(--accent-bright); }
+
+  .page-section { max-width: 1100px; margin: 0 auto; padding: 50px 4px; }
+  .page-title { font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 800; margin: 0 0 30px 0; }
+  .about-extra-bg { background: var(--card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); max-width: none; padding: 46px 20px; }
+  .about-extra-bg > .page-section, .about-extra-bg { }
+  .about-extra-bg .about-block, .about-extra-bg .info-row-grid { max-width: 1100px; margin: 0 auto 22px auto; }
+
+  /* ---- About teaser (home) ---- */
+  .about-teaser { display: flex; flex-direction: column; gap: 20px; max-width: 1100px; margin: 0 auto; }
+  @media (min-width: 720px) { .about-teaser { flex-direction: row; align-items: center; gap: 40px; } }
+  .about-teaser-photo { flex: 0 0 auto; width: 200px; }
+  .about-teaser-photo img { width: 100%; border-radius: 14px; display: block; object-fit: cover; aspect-ratio: 4/5; }
+
+  /* ---- About full page ---- */
+  .about-full { display: flex; flex-direction: column; gap: 24px; }
+  @media (min-width: 720px) { .about-full { flex-direction: row; align-items: flex-start; gap: 40px; } }
+  .about-full-photo { flex: 0 0 auto; width: 280px; }
+  .about-full-photo img { width: 100%; border-radius: 10px; display: block; object-fit: cover; }
+  .about-full-text { color: #d8d6d0; font-size: 0.98rem; line-height: 1.75; white-space: pre-wrap; }
+  .about-block { margin-bottom: 22px; }
+  .about-block-title { color: var(--accent-bright); font-size: 1.05rem; font-weight: 800; margin: 0 0 8px 0; }
+  .about-tags { color: #d8d6d0; font-size: 0.92rem; line-height: 1.7; }
+  .about-cert-item { color: #d8d6d0; font-size: 0.9rem; line-height: 1.6; margin: 0 0 10px 0; }
+  .info-row-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; text-align: center; }
+
+  /* ---- Featured articles ---- */
+  .article-list { display: flex; flex-direction: column; }
+  .article-row {
+    display: block; padding: 16px 4px; border-bottom: 1px solid var(--border);
+    text-decoration: none; color: var(--text);
+  }
+  .article-meta { font-size: 0.78rem; color: var(--muted); margin-bottom: 3px; }
+  .article-title { font-size: 0.95rem; font-weight: 600; }
+
+  /* ---- Latest work (home) ---- */
+  .latest-work-section { max-width: 1100px; margin: 0 auto; padding: 50px 4px; }
+  .latest-work-grid { display: flex; flex-direction: column; gap: 30px; }
+  @media (min-width: 900px) { .latest-work-grid { flex-direction: row; align-items: center; } }
+  .teaser-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; flex: 1.3; }
+  .teaser-tile { border-radius: 10px; overflow: hidden; aspect-ratio: 1/1; background: var(--card); border: 1px solid var(--border); cursor: pointer; }
+  .teaser-tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s ease; }
+  .teaser-tile:hover img { transform: scale(1.08); }
+  .teaser-tile-noimg { width: 100%; height: 100%; }
+  .latest-work-info { flex: 1; text-align: center; }
+  @media (min-width: 900px) { .latest-work-info { text-align: left; } }
+
+  /* ---- Timeline (Resume) ---- */
+  .timeline { position: relative; max-width: 1000px; margin: 40px auto 0 auto; padding-left: 20px; }
+  .timeline::before { content: ""; position: absolute; left: 20px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+  @media (min-width: 800px) { .timeline { padding-left: 0; } .timeline::before { left: 50%; margin-left: -1px; } }
+  .timeline-item { position: relative; margin-bottom: 24px; padding-left: 44px; }
+  @media (min-width: 800px) { .timeline-item { width: 46%; padding-left: 0; } .timeline-item.left { margin-right: 54%; text-align: right; } .timeline-item.right { margin-left: 54%; } }
+  .timeline-dot {
+    position: absolute; left: 12px; top: 4px; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--bg); border: 2px solid var(--accent);
+  }
+  @media (min-width: 800px) { .timeline-item.left .timeline-dot { right: -63px; left: auto; } .timeline-item.right .timeline-dot { left: -63px; } }
+  .timeline-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+  .timeline-date { font-weight: 800; font-size: 0.95rem; }
+  .timeline-org { font-style: italic; color: var(--muted); font-size: 0.85rem; margin: 2px 0 8px 0; }
+  .timeline-role { font-weight: 700; font-size: 0.92rem; margin-bottom: 6px; }
+  .timeline-desc { color: #d8d6d0; font-size: 0.88rem; line-height: 1.6; margin: 0; }
+
+  /* ---- Project detail (case study) ---- */
+  .detail-hero-section {
+    display: flex; flex-direction: column; gap: 0;
+    max-width: 1400px; margin: 0 auto;
+  }
+  @media (min-width: 900px) { .detail-hero-section { flex-direction: row; align-items: stretch; min-height: 60vh; } }
+  .detail-media { flex: 1.3; background: var(--card); display: flex; align-items: center; justify-content: center; min-height: 320px; }
+  .detail-media-img { width: 100%; height: 100%; object-fit: cover; display: block; min-height: 320px; max-height: 70vh; }
+  .detail-media-embed { width: 100%; height: 100%; min-height: 420px; }
+  .detail-media-embed iframe { width: 100%; height: 100%; min-height: 420px; border: none; display: block; }
+  .detail-media-noimg { color: var(--muted); padding: 60px; }
+  .detail-side { flex: 1; padding: 40px 24px; display: flex; flex-direction: column; justify-content: center; }
+  @media (min-width: 900px) { .detail-side { padding: 40px 50px; } }
+  .detail-title { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; margin: 8px 0 8px 0; line-height: 1.15; }
+  .detail-links-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  .detail-links-row .pdf-btn { flex: 1; min-width: 200px; justify-content: center; }
 </style>
 </head>
 <body>
@@ -398,7 +530,13 @@ async function deleteProjectFromCloud(id) {
 
 /* ---- Perfil (nombre, foto, bio, contacto) ---- */
 const PROFILE_CACHE_KEY = "portfoliogis:profilecache";
-const DEFAULT_PROFILE = { name: "", tagline: "", bio: "", photo: "", linkedin: "", email: "", github: "" };
+const DEFAULT_PROFILE = {
+  name: "", tagline: "", bio: "", photo: "", heroImage: "",
+  linkedin: "", email: "", github: "",
+  researchInterests: [], technicalSkills: [],
+  certifications: [], featuredArticles: [],
+  experience: [], education: [], awards: []
+};
 
 function loadProfileCache() {
   try {
@@ -481,17 +619,18 @@ function render() {
   const backBtn = document.getElementById('backBtn');
   const app = document.getElementById('app');
   const fab = document.getElementById('fabBtn');
-  const heroActive = currentView === "detail" || currentView === "home";
+  const fullPageViews = ["detail", "home", "about", "resume", "portfolio"];
+  const heroActive = fullPageViews.includes(currentView);
 
   document.getElementById('mainHeader').style.display = heroActive ? "none" : "block";
   app.classList.toggle('content-narrow', currentView === "form" || currentView === "profileForm");
-  backBtn.style.display = (currentView === "home") ? "none" : "block";
-  fab.style.display = (currentView === "home" && isAdmin()) ? "flex" : "none";
+  backBtn.style.display = heroActive ? "none" : "block";
+  fab.style.display = (currentView === "portfolio" && isAdmin()) ? "flex" : "none";
 
-  if (currentView === "home") {
-    renderHome(app);
-    return;
-  }
+  if (currentView === "home") { renderHome(app); return; }
+  if (currentView === "about") { renderAbout(app); return; }
+  if (currentView === "resume") { renderResume(app); return; }
+  if (currentView === "portfolio") { renderPortfolioView(app); return; }
   if (currentView === "form") {
     document.getElementById('pageTitle').textContent = editingId ? "Editar proyecto" : "Nuevo proyecto";
     document.getElementById('subtitleLabel').textContent = "";
@@ -521,42 +660,65 @@ function getFeaturedProjects(projects) {
   return projects.slice().sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 4);
 }
 
-function renderHome(app) {
-  const projects = loadProjects();
+function navBarHtml(activeView) {
   const profile = loadProfile();
-  const categories = Array.from(new Set(projects.map(p => p.category).filter(Boolean)));
-  const featured = getFeaturedProjects(projects);
-  if (carouselIndex >= featured.length) carouselIndex = 0;
-
-  const navHtml = `
+  const links = [
+    { id: "home", label: "Inicio" },
+    { id: "about", label: "Sobre mí" },
+    { id: "resume", label: "Resume" },
+    { id: "portfolio", label: "Portfolio" }
+  ];
+  return `
     <nav class="site-nav">
       <div class="nav-inner">
         <span class="nav-logo serif">${escapeHtml(profile.name) || 'Portfolio <span class="accent-word">GIS</span>'}</span>
         <div class="nav-links">
-          <a class="nav-link" data-scroll="hero">Inicio</a>
-          <a class="nav-link" data-scroll="about">Sobre mí</a>
-          <a class="nav-link" data-scroll="proyectos">Proyectos</a>
-          <a class="nav-link" data-scroll="contacto">Contacto</a>
+          ${links.map(l => `<a class="nav-link ${activeView === l.id ? 'active' : ''}" data-nav="${l.id}">${l.label}</a>`).join('')}
         </div>
         <button class="admin-pill" id="adminBtnNav">${isAdmin() ? "🔓 Edición" : "🔒"}</button>
       </div>
     </nav>
   `;
+}
+function wireNavBar(app, activeView) {
+  document.getElementById('adminBtnNav').addEventListener('click', () => {
+    if (isAdmin()) { lockAdmin(); } else { tryUnlockAdmin(); }
+  });
+  app.querySelectorAll('[data-nav]').forEach(el => {
+    el.addEventListener('click', () => { currentView = el.dataset.nav; render(); window.scrollTo(0, 0); });
+  });
+}
+
+function renderHome(app) {
+  const projects = loadProjects();
+  const profile = loadProfile();
+  const featured = getFeaturedProjects(projects);
+  if (carouselIndex >= featured.length) carouselIndex = 0;
+  const latest = projects.slice().sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 6);
 
   const heroHtml = `
     <section class="hero-section" id="hero">
-      <div class="hero-photo-wrap">${profile.photo ? `<img src="${escapeAttr(profile.photo)}" alt="">` : "🧭"}</div>
-      <h1 class="hero-name serif">${escapeHtml(profile.name) || "Tu nombre aquí"}</h1>
-      <p class="hero-tagline">${escapeHtml(profile.tagline) || "Analista GIS · Teledetección · Cartografía"}</p>
-      <button class="hero-cta" data-scroll="proyectos">Ver proyectos ↓</button>
+      <div class="hero-bg" style="${profile.heroImage ? `background-image:url('${escapeAttr(profile.heroImage)}');` : ""}"></div>
+      <div class="hero-card">
+        <div class="hero-photo-wrap">${profile.photo ? `<img src="${escapeAttr(profile.photo)}" alt="">` : "🧭"}</div>
+        <h1 class="hero-name serif">${escapeHtml(profile.name) || "Tu nombre aquí"}</h1>
+        <p class="hero-tagline">${escapeHtml(profile.tagline) || "Analista GIS · Teledetección · Cartografía"}</p>
+        <button class="hero-cta" data-nav="portfolio">Ver proyectos</button>
+      </div>
       ${isAdmin() ? `<button class="edit-profile-btn" id="editProfileBtn">✎ Editar perfil</button>` : ""}
     </section>
   `;
 
-  const aboutHtml = `
-    <section class="about-section" id="about">
-      <h2 class="section-heading serif">Sobre mí</h2>
-      <p class="about-text">${escapeHtml(profile.bio) || "Aún no has escrito tu presentación. Tócala desde \u201cEditar perfil\u201d."}</p>
+  const aboutTeaserHtml = `
+    <section class="about-section">
+      <div class="about-teaser">
+        <div class="about-teaser-photo">${profile.photo ? `<img src="${escapeAttr(profile.photo)}" alt="">` : ""}</div>
+        <div>
+          <h2 class="section-heading serif">Sobre mí</h2>
+          <p class="about-text">${escapeHtml(shortenText(profile.bio, 320)) || "Aún no has escrito tu presentación. Tócala desde \u201cEditar perfil\u201d."}</p>
+          <button class="hero-cta" data-nav="about" style="margin-top:6px;">Más sobre mí</button>
+        </div>
+      </div>
     </section>
   `;
 
@@ -564,86 +726,64 @@ function renderHome(app) {
   if (featured.length > 0) {
     featuredHtml = `
       <section class="featured-section">
-        <h2 class="section-heading serif">Proyectos destacados</h2>
+        <h2 class="section-heading serif" style="text-align:center;">Destacados</h2>
         <div id="carouselWrap"></div>
       </section>
     `;
   }
 
-  let filterHtml = `<div class="filter-row">`;
-  filterHtml += `<button class="filter-chip ${activeFilter === 'todas' ? 'active' : ''}" data-filter="todas">Todas</button>`;
-  categories.forEach(c => {
-    filterHtml += `<button class="filter-chip ${activeFilter === c ? 'active' : ''}" data-filter="${escapeAttr(c)}">${escapeHtml(c)}</button>`;
-  });
-  filterHtml += `</div>`;
-
-  const filtered = activeFilter === "todas" ? projects : projects.filter(p => p.category === activeFilter);
-  const sorted = filtered.slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-
-  let gridHtml;
-  if (sorted.length === 0) {
-    gridHtml = `<div class="empty-state">${projects.length === 0 ? "Aún no has añadido ningún proyecto.<br>Toca el botón + para empezar tu portfolio." : "No hay proyectos en esta categoría."}</div>`;
-  } else {
-    gridHtml = `<div class="masonry">`;
-    sorted.forEach(p => {
-      const img = p.cover;
-      gridHtml += `
-        <div class="tile" data-id="${p.id}">
-          ${img ? `<img src="${img}" alt="">` : `<div class="tile-noimg">${escapeHtml(p.title)}</div>`}
-          <div class="tile-overlay">
-            <div class="tile-title">${escapeHtml(p.title)}</div>
-            ${p.category ? `<div class="tile-cat">${escapeHtml(p.category)}</div>` : ""}
-          </div>
-        </div>
-      `;
-    });
-    gridHtml += `</div>`;
+  let latestGridHtml = "";
+  if (latest.length > 0) {
+    latestGridHtml = `<div class="teaser-grid">` + latest.map(p => `
+      <div class="teaser-tile" data-id="${p.id}">
+        ${p.cover ? `<img src="${p.cover}" alt="">` : `<div class="teaser-tile-noimg"></div>`}
+      </div>
+    `).join('') + `</div>`;
   }
 
-  const proyectosHtml = `
-    <section class="proyectos-section" id="proyectos">
-      <h2 class="section-heading serif">Todos los proyectos</h2>
-      ${filterHtml}
-      ${gridHtml}
+  const latestWorkHtml = `
+    <section class="latest-work-section">
+      <div class="latest-work-grid">
+        ${latestGridHtml || `<div class="empty-state">Aún no has añadido proyectos.</div>`}
+        <div class="latest-work-info">
+          <h2 class="section-heading serif">Últimos trabajos</h2>
+          <p class="about-text">Explora mis proyectos de teledetección, GIS y cartografía web.</p>
+          <button class="hero-cta" data-nav="portfolio">Más proyectos</button>
+        </div>
+      </div>
     </section>
   `;
 
+  app.innerHTML = navBarHtml("home") + heroHtml + aboutTeaserHtml + featuredHtml + latestWorkHtml + siteFooterHtml(profile);
+  wireNavBar(app, "home");
+
+  const editProfileBtn = document.getElementById('editProfileBtn');
+  if (editProfileBtn) editProfileBtn.addEventListener('click', () => { currentView = "profileForm"; render(); });
+
+  if (featured.length > 0) renderCarousel(featured);
+
+  app.querySelectorAll('.teaser-tile').forEach(tile => {
+    tile.addEventListener('click', () => { viewingId = tile.dataset.id; currentView = "detail"; render(); window.scrollTo(0,0); });
+  });
+}
+
+function shortenText(text, maxLen) {
+  if (!text) return "";
+  if (text.length <= maxLen) return text;
+  return text.slice(0, maxLen).trim() + "…";
+}
+
+function siteFooterHtml(profile) {
   let contactLinks = "";
   if (profile.linkedin) contactLinks += `<a class="contact-link" href="${escapeAttr(profile.linkedin)}" target="_blank" rel="noopener">LinkedIn</a>`;
   if (profile.email) contactLinks += `<a class="contact-link" href="mailto:${escapeAttr(profile.email)}">${escapeHtml(profile.email)}</a>`;
   if (profile.github) contactLinks += `<a class="contact-link" href="${escapeAttr(profile.github)}" target="_blank" rel="noopener">GitHub</a>`;
-
-  const contactHtml = `
-    <section class="contact-section" id="contacto">
-      <h2 class="section-heading serif">Contacto</h2>
-      ${contactLinks ? `<div class="contact-links">${contactLinks}</div>` : `<div class="about-text" style="margin:0 auto;">Añade tus enlaces de contacto desde "Editar perfil".</div>`}
+  return `
+    <section class="contact-section">
+      ${contactLinks ? `<div class="contact-links">${contactLinks}</div>` : ""}
     </section>
     <footer class="site-footer">© ${new Date().getFullYear()} ${escapeHtml(profile.name) || "Portfolio GIS"}</footer>
   `;
-
-  app.innerHTML = navHtml + heroHtml + aboutHtml + featuredHtml + proyectosHtml + contactHtml;
-
-  document.getElementById('adminBtnNav').addEventListener('click', () => {
-    if (isAdmin()) { lockAdmin(); } else { tryUnlockAdmin(); }
-  });
-  const editProfileBtn = document.getElementById('editProfileBtn');
-  if (editProfileBtn) editProfileBtn.addEventListener('click', () => { currentView = "profileForm"; render(); });
-
-  app.querySelectorAll('[data-scroll]').forEach(el => {
-    el.addEventListener('click', () => {
-      const target = document.getElementById(el.dataset.scroll);
-      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  });
-
-  if (featured.length > 0) renderCarousel(featured);
-
-  app.querySelectorAll('.filter-chip').forEach(btn => {
-    btn.addEventListener('click', () => { activeFilter = btn.dataset.filter; render(); });
-  });
-  app.querySelectorAll('.tile').forEach(tile => {
-    tile.addEventListener('click', () => { viewingId = tile.dataset.id; currentView = "detail"; render(); window.scrollTo(0,0); });
-  });
 }
 
 function renderCarousel(featured) {
@@ -689,63 +829,233 @@ function renderCarousel(featured) {
 }
 
 /* =========================================================
+   PORTFOLIO — mosaico completo con filtros
+   ========================================================= */
+function renderPortfolioView(app) {
+  const projects = loadProjects();
+  const profile = loadProfile();
+  const categories = Array.from(new Set(projects.map(p => p.category).filter(Boolean)));
+
+  let filterHtml = `<div class="filter-row" style="justify-content:center;">`;
+  filterHtml += `<button class="filter-chip ${activeFilter === 'todas' ? 'active' : ''}" data-filter="todas">Show all</button>`;
+  categories.forEach(c => {
+    filterHtml += `<button class="filter-chip ${activeFilter === c ? 'active' : ''}" data-filter="${escapeAttr(c)}">${escapeHtml(c)}</button>`;
+  });
+  filterHtml += `</div>`;
+
+  const filtered = activeFilter === "todas" ? projects : projects.filter(p => p.category === activeFilter);
+  const sorted = filtered.slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+  let gridHtml;
+  if (sorted.length === 0) {
+    gridHtml = `<div class="empty-state">${projects.length === 0 ? "Aún no has añadido ningún proyecto.<br>Toca el botón + para empezar tu portfolio." : "No hay proyectos en esta categoría."}</div>`;
+  } else {
+    gridHtml = `<div class="masonry">`;
+    sorted.forEach(p => {
+      const img = p.cover;
+      gridHtml += `
+        <div class="tile" data-id="${p.id}">
+          ${img ? `<img src="${img}" alt="">` : `<div class="tile-noimg">${escapeHtml(p.title)}</div>`}
+          <div class="tile-overlay">
+            <div class="tile-title">${escapeHtml(p.title)}</div>
+            ${p.category ? `<div class="tile-cat">${escapeHtml(p.category)}</div>` : ""}
+          </div>
+        </div>
+      `;
+    });
+    gridHtml += `</div>`;
+  }
+
+  app.innerHTML = navBarHtml("portfolio") + `
+    <section class="page-section">
+      <h1 class="page-title serif">Portfolio</h1>
+      ${filterHtml}
+      ${gridHtml}
+    </section>
+  ` + siteFooterHtml(profile);
+
+  wireNavBar(app, "portfolio");
+  app.querySelectorAll('.filter-chip').forEach(btn => {
+    btn.addEventListener('click', () => { activeFilter = btn.dataset.filter; render(); });
+  });
+  app.querySelectorAll('.tile').forEach(tile => {
+    tile.addEventListener('click', () => { viewingId = tile.dataset.id; currentView = "detail"; render(); window.scrollTo(0,0); });
+  });
+}
+
+/* =========================================================
+   SOBRE MÍ — página extensa
+   ========================================================= */
+function renderAbout(app) {
+  const profile = loadProfile();
+
+  const tagsBlock = (title, arr) => {
+    if (!arr || arr.length === 0) return "";
+    return `
+      <div class="about-block">
+        <h3 class="about-block-title">${title}</h3>
+        <p class="about-tags">${arr.map(escapeHtml).join(' &nbsp;|&nbsp; ')}</p>
+      </div>
+    `;
+  };
+
+  const certsBlock = (profile.certifications && profile.certifications.length > 0) ? `
+    <div class="about-block">
+      <h3 class="about-block-title">Certifications & Certificates</h3>
+      ${profile.certifications.map(c => `<p class="about-cert-item"><b>${escapeHtml(c.title)}</b>${c.date ? ` <i>— ${escapeHtml(c.date)}</i>` : ""}</p>`).join('')}
+    </div>
+  ` : "";
+
+  const articlesBlock = (profile.featuredArticles && profile.featuredArticles.length > 0) ? `
+    <section class="page-section">
+      <h2 class="section-heading serif">Featured</h2>
+      <div class="article-list">
+        ${profile.featuredArticles.map(a => `
+          <a class="article-row" href="${escapeAttr(a.link || '#')}" target="_blank" rel="noopener">
+            <div class="article-meta">${escapeHtml(a.source)}${a.date ? ` · ${escapeHtml(a.date)}` : ""}</div>
+            <div class="article-title">${escapeHtml(a.title)}</div>
+          </a>
+        `).join('')}
+      </div>
+    </section>
+  ` : "";
+
+  app.innerHTML = navBarHtml("about") + `
+    <section class="page-section">
+      <h1 class="page-title serif" style="text-align:center;">About Me</h1>
+      <div class="about-full">
+        <div class="about-full-photo">${profile.photo ? `<img src="${escapeAttr(profile.photo)}" alt="">` : ""}</div>
+        <div class="about-full-text">${escapeHtml(profile.bio) || "Aún no has escrito tu presentación."}</div>
+      </div>
+    </section>
+    ${(tagsBlock("Research Interests", profile.researchInterests) || tagsBlock("Technical Skills", profile.technicalSkills) || certsBlock) ? `
+    <section class="page-section about-extra-bg">
+      ${tagsBlock("Research Interests", profile.researchInterests)}
+      ${tagsBlock("Technical Skills", profile.technicalSkills)}
+      ${certsBlock}
+    </section>` : ""}
+    ${articlesBlock}
+  ` + siteFooterHtml(profile);
+
+  wireNavBar(app, "about");
+}
+
+/* =========================================================
+   RESUME — timeline de experiencia
+   ========================================================= */
+function renderResume(app) {
+  const profile = loadProfile();
+
+  const experienceHtml = (profile.experience && profile.experience.length > 0) ? `
+    <h2 class="section-heading serif" style="text-align:center;">Professional Experience</h2>
+    <div class="timeline">
+      ${profile.experience.map((e, i) => `
+        <div class="timeline-item ${i % 2 === 0 ? 'left' : 'right'}">
+          <div class="timeline-dot"></div>
+          <div class="timeline-card">
+            <div class="timeline-date">${escapeHtml(e.dateRange)}</div>
+            <div class="timeline-org">${escapeHtml(e.org)}</div>
+            <div class="timeline-role">${escapeHtml(e.role)}</div>
+            <p class="timeline-desc">${escapeHtml(e.description)}</p>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  ` : `<div class="empty-state">Aún no has añadido experiencia profesional.</div>`;
+
+  const educationHtml = (profile.education && profile.education.length > 0) ? `
+    <div class="about-block">
+      <h3 class="about-block-title">Education</h3>
+      ${profile.education.map(ed => `
+        <p class="about-cert-item"><b>${escapeHtml(ed.school)}</b><br><i>${escapeHtml(ed.degree)}</i>${ed.dateRange ? ` — ${escapeHtml(ed.dateRange)}` : ""}</p>
+      `).join('')}
+    </div>
+  ` : "";
+
+  const awardsHtml = (profile.awards && profile.awards.length > 0) ? `
+    <div class="about-block">
+      <h3 class="about-block-title">Awards and Honors</h3>
+      <p class="about-tags">${profile.awards.map(escapeHtml).join(' &nbsp;|&nbsp; ')}</p>
+    </div>
+  ` : "";
+
+  app.innerHTML = navBarHtml("resume") + `
+    <section class="page-section">
+      <h1 class="page-title serif" style="text-align:center;">Resume</h1>
+      ${experienceHtml}
+    </section>
+    ${(educationHtml || awardsHtml) ? `<section class="page-section about-extra-bg">${educationHtml}${awardsHtml}</section>` : ""}
+  ` + siteFooterHtml(profile);
+
+  wireNavBar(app, "resume");
+}
+
+/* =========================================================
    DETALLE — página tipo case study
    ========================================================= */
 function renderDetail(app) {
   const projects = loadProjects();
   const p = projects.find(x => x.id === viewingId);
-  if (!p) { currentView = "home"; render(); return; }
+  if (!p) { currentView = "portfolio"; render(); return; }
 
   const dateLabel = p.date ? new Date(p.date + "T00:00:00").toLocaleDateString('es-ES', { year: 'numeric', month: 'long' }) : "";
+  const hasMap = !!p.mapUrl;
+  const mainVisualHtml = hasMap
+    ? `<div class="detail-media-embed"><iframe src="${escapeAttr(toEmbedUrl(p.mapUrl))}" loading="lazy" allowfullscreen></iframe></div>`
+    : (p.cover ? `<img class="detail-media-img" src="${p.cover}" alt="">` : `<div class="detail-media-noimg">Sin imagen</div>`);
+
+  const infoRows = [];
+  if (p.supervisor) infoRows.push({ label: "Supervisor", value: p.supervisor });
+  if (p.affiliation) infoRows.push({ label: "Affiliation", value: p.affiliation });
+  if (p.partners) infoRows.push({ label: "Partners", value: p.partners });
 
   let html = `
-    <div style="position:relative;">
-      <button class="back-btn" id="backBtnDetail" style="position:fixed; top:calc(14px + env(safe-area-inset-top)); left:14px; z-index:20;">‹ Volver</button>
-      <div class="case-hero">
-        ${p.cover ? `<img src="${p.cover}" alt="">` : `<div class="case-hero-noimg">Sin imagen de portada</div>`}
+    <button class="back-btn" id="backBtnDetail" style="position:fixed; top:calc(14px + env(safe-area-inset-top)); left:14px; z-index:20;">‹ Volver</button>
+    <section class="detail-hero-section">
+      <div class="detail-media">${mainVisualHtml}</div>
+      <div class="detail-side">
+        ${p.category ? `<div class="case-cat">${escapeHtml(p.category)}</div>` : ""}
+        <div class="detail-title serif">${escapeHtml(p.title)}</div>
+        ${dateLabel ? `<div class="case-date">${dateLabel}</div>` : ""}
+        <button class="hero-cta" id="toggleAccordion">Ver explicación completa</button>
       </div>
-    </div>
-    <div class="case-body">
-      ${p.category ? `<div class="case-cat">${escapeHtml(p.category)}</div>` : ""}
-      <div class="case-title serif">${escapeHtml(p.title)}</div>
-      ${dateLabel ? `<div class="case-date">${dateLabel}</div>` : ""}
-      ${p.description ? `<div class="case-desc">${escapeHtml(p.description)}</div>` : ""}
+    </section>
+
+    ${infoRows.length ? `
+    <section class="page-section about-extra-bg">
+      <div class="info-row-grid">
+        ${infoRows.map(r => `<div><h3 class="about-block-title">${r.label}</h3><p class="about-tags">${escapeHtml(r.value)}</p></div>`).join('')}
+      </div>
+    </section>` : ""}
+
+    <section class="page-section" id="accordionContent" style="display:none;">
+      ${p.description ? `<p class="case-desc">${escapeHtml(p.description)}</p>` : ""}
       ${p.techStack && p.techStack.length ? `<div class="tech-row">${p.techStack.map(t => `<span class="tech-chip">${escapeHtml(t)}</span>`).join('')}</div>` : ""}
-  `;
-
-  if (p.mapUrl) {
-    html += `
-      <div class="case-section-title">Mapa interactivo</div>
-      <div class="map-embed-wrap"><iframe src="${escapeAttr(toEmbedUrl(p.mapUrl))}" loading="lazy" allowfullscreen></iframe></div>
-    `;
-  }
-
-  if (p.gallery && p.gallery.length) {
-    html += `
-      <div class="case-section-title">Galería</div>
-      <div class="gallery-grid">${p.gallery.map(g => `<img src="${g}" alt="">`).join('')}</div>
-    `;
-  }
-
-  if (p.pdfUrl) {
-    html += `
-      <div class="case-section-title">Documento</div>
-      <a class="pdf-btn" href="${escapeAttr(p.pdfUrl)}" target="_blank" rel="noopener">📄 Abrir PDF del proyecto</a>
-    `;
-  }
-
-  html += `
+      ${p.gallery && p.gallery.length ? `<div class="case-section-title">Galería</div><div class="gallery-grid">${p.gallery.map(g => `<img src="${g}" alt="">`).join('')}</div>` : ""}
+      <div class="detail-links-row">
+        ${p.pdfUrl ? `<a class="pdf-btn" href="${escapeAttr(p.pdfUrl)}" target="_blank" rel="noopener">📄 Documento PDF</a>` : ""}
+        ${p.codeUrl ? `<a class="pdf-btn" href="${escapeAttr(p.codeUrl)}" target="_blank" rel="noopener">💻 Código del proyecto</a>` : ""}
+        ${hasMap && p.cover ? `<a class="pdf-btn" href="${escapeAttr(p.mapUrl)}" target="_blank" rel="noopener">🗺️ Abrir mapa en pestaña nueva</a>` : ""}
+      </div>
       ${isAdmin() ? `
       <div class="edit-row">
         <button class="secondary-btn" id="editProjBtn">Editar</button>
         <button class="danger-btn" id="deleteProjBtn">Eliminar</button>
       </div>` : ""}
-    </div>
-  `;
+    </section>
+  ` + siteFooterHtml(loadProfile());
 
   app.innerHTML = html;
 
-  document.getElementById('backBtnDetail').addEventListener('click', () => { currentView = "home"; render(); });
+  document.getElementById('backBtnDetail').addEventListener('click', () => { currentView = "portfolio"; render(); });
+  document.getElementById('toggleAccordion').addEventListener('click', () => {
+    const el = document.getElementById('accordionContent');
+    const btn = document.getElementById('toggleAccordion');
+    const open = el.style.display !== "none";
+    el.style.display = open ? "none" : "block";
+    btn.textContent = open ? "Ver explicación completa" : "Ocultar explicación";
+    if (!open) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
   const editBtn = document.getElementById('editProjBtn');
   const delBtn = document.getElementById('deleteProjBtn');
   if (editBtn) editBtn.addEventListener('click', () => { editingId = p.id; currentView = "form"; render(); });
@@ -754,7 +1064,7 @@ function renderDetail(app) {
     const ok = await deleteProjectFromCloud(p.id);
     if (!ok) return;
     showToast("🗑️ Proyecto eliminado");
-    currentView = "home";
+    currentView = "portfolio";
     await fetchProjectsFromCloud();
     render();
   });
@@ -780,6 +1090,11 @@ function renderProfileForm(app) {
       <img id="photoPreview" class="upload-preview" style="${p.photo ? '' : 'display:none;'} border-radius:50%; max-width:140px;" src="${escapeAttr(p.photo || '')}">
     </div>
     <div class="field">
+      <label>Ruta o URL de la imagen de fondo de la cabecera</label>
+      <input type="text" id="pHeroImage" value="${escapeAttr(p.heroImage)}" placeholder="images/mapa-fondo.jpg">
+      <img id="heroImagePreview" class="upload-preview" style="${p.heroImage ? '' : 'display:none;'}" src="${escapeAttr(p.heroImage || '')}">
+    </div>
+    <div class="field">
       <label>Sobre mí</label>
       <textarea id="pBio" placeholder="Cuéntanos quién eres, tu formación, tu enfoque...">${escapeHtml(p.bio)}</textarea>
     </div>
@@ -795,6 +1110,36 @@ function renderProfileForm(app) {
       <label>Enlace de GitHub (opcional)</label>
       <input type="url" id="pGithub" value="${escapeAttr(p.github)}" placeholder="https://github.com/...">
     </div>
+
+    <div class="field">
+      <label>Intereses de investigación (separados por comas)</label>
+      <input type="text" id="pInterests" value="${escapeAttr((p.researchInterests || []).join(', '))}" placeholder="Teledetección, Cambio climático, Cartografía">
+    </div>
+    <div class="field">
+      <label>Habilidades técnicas (separadas por comas)</label>
+      <input type="text" id="pSkills" value="${escapeAttr((p.technicalSkills || []).join(', '))}" placeholder="QGIS, Python, R, PostGIS">
+    </div>
+    <div class="field">
+      <label>Certificaciones (una por línea: Título — Fecha)</label>
+      <textarea id="pCerts" placeholder="Certified Software Carpentry Instructor — Julio 2022">${escapeHtml((p.certifications || []).map(c => `${c.title} — ${c.date}`).join('\n'))}</textarea>
+    </div>
+    <div class="field">
+      <label>Artículos destacados (uno por línea: Fuente | Fecha | Título | Enlace)</label>
+      <textarea id="pArticles" placeholder="NASA Applied Sciences | Agosto 2023 | Título del artículo | https://...">${escapeHtml((p.featuredArticles || []).map(a => `${a.source} | ${a.date} | ${a.title} | ${a.link}`).join('\n'))}</textarea>
+    </div>
+    <div class="field">
+      <label>Experiencia profesional (una por línea: Fechas | Organización | Puesto | Descripción)</label>
+      <textarea id="pExperience" placeholder="Nov 2023 - Presente | Empresa X | Analista GIS | Descripción del puesto...">${escapeHtml((p.experience || []).map(e => `${e.dateRange} | ${e.org} | ${e.role} | ${e.description}`).join('\n'))}</textarea>
+    </div>
+    <div class="field">
+      <label>Educación (una por línea: Centro | Título | Fechas)</label>
+      <textarea id="pEducation" placeholder="Universidad de Alcalá | Grado en Ciencias Ambientales | 2018 - 2022">${escapeHtml((p.education || []).map(e => `${e.school} | ${e.degree} | ${e.dateRange}`).join('\n'))}</textarea>
+    </div>
+    <div class="field">
+      <label>Premios y menciones (separados por comas)</label>
+      <input type="text" id="pAwards" value="${escapeAttr((p.awards || []).join(', '))}" placeholder="Matrícula de honor, Beca de excelencia">
+    </div>
+
     <button class="primary-btn" id="saveProfileBtn">Guardar perfil</button>
   `;
 
@@ -805,15 +1150,50 @@ function renderProfileForm(app) {
     else { prev.style.display = "none"; }
   });
 
+  const heroImageInput = document.getElementById('pHeroImage');
+  heroImageInput.addEventListener('input', () => {
+    const prev = document.getElementById('heroImagePreview');
+    if (heroImageInput.value.trim()) { prev.src = heroImageInput.value.trim(); prev.style.display = "block"; }
+    else { prev.style.display = "none"; }
+  });
+
   document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+    const parseLines = (id) => document.getElementById(id).value.split('\n').map(l => l.trim()).filter(Boolean);
+    const parseCsv = (id) => document.getElementById(id).value.split(',').map(s => s.trim()).filter(Boolean);
+
+    const certifications = parseLines('pCerts').map(line => {
+      const [title, date] = line.split('—').map(s => (s || "").trim());
+      return { title: title || line, date: date || "" };
+    });
+    const featuredArticles = parseLines('pArticles').map(line => {
+      const [source, date, title, link] = line.split('|').map(s => (s || "").trim());
+      return { source: source || "", date: date || "", title: title || "", link: link || "" };
+    });
+    const experience = parseLines('pExperience').map(line => {
+      const [dateRange, org, role, description] = line.split('|').map(s => (s || "").trim());
+      return { dateRange: dateRange || "", org: org || "", role: role || "", description: description || "" };
+    });
+    const education = parseLines('pEducation').map(line => {
+      const [school, degree, dateRange] = line.split('|').map(s => (s || "").trim());
+      return { school: school || "", degree: degree || "", dateRange: dateRange || "" };
+    });
+
     const profile = {
       name: document.getElementById('pName').value.trim(),
       tagline: document.getElementById('pTagline').value.trim(),
       photo: document.getElementById('pPhoto').value.trim(),
+      heroImage: document.getElementById('pHeroImage').value.trim(),
       bio: document.getElementById('pBio').value.trim(),
       linkedin: document.getElementById('pLinkedin').value.trim(),
       email: document.getElementById('pEmail').value.trim(),
-      github: document.getElementById('pGithub').value.trim()
+      github: document.getElementById('pGithub').value.trim(),
+      researchInterests: parseCsv('pInterests'),
+      technicalSkills: parseCsv('pSkills'),
+      certifications,
+      featuredArticles,
+      experience,
+      education,
+      awards: parseCsv('pAwards')
     };
     const ok = await saveProfileToCloud(profile);
     if (!ok) return;
@@ -828,7 +1208,7 @@ function renderProfileForm(app) {
 function renderForm(app) {
   const projects = loadProjects();
   const existing = editingId ? projects.find(p => p.id === editingId) : null;
-  const data = existing || { title: "", category: "", date: "", description: "", techStack: [], cover: "", gallery: [], mapUrl: "", pdfUrl: "", featured: false };
+  const data = existing || { title: "", category: "", date: "", description: "", techStack: [], cover: "", gallery: [], mapUrl: "", pdfUrl: "", codeUrl: "", supervisor: "", affiliation: "", partners: "", featured: false };
 
   const categories = Array.from(new Set(projects.map(p => p.category).filter(Boolean)));
 
@@ -874,6 +1254,22 @@ function renderForm(app) {
       <label>Enlace al PDF (opcional)</label>
       <input type="url" id="fPdfUrl" value="${escapeAttr(data.pdfUrl)}" placeholder="https://...">
     </div>
+    <div class="field">
+      <label>Enlace al código (opcional)</label>
+      <input type="url" id="fCodeUrl" value="${escapeAttr(data.codeUrl)}" placeholder="https://github.com/...">
+    </div>
+    <div class="field">
+      <label>Supervisor (opcional)</label>
+      <input type="text" id="fSupervisor" value="${escapeAttr(data.supervisor)}" placeholder="Nombre del supervisor">
+    </div>
+    <div class="field">
+      <label>Afiliación (opcional)</label>
+      <input type="text" id="fAffiliation" value="${escapeAttr(data.affiliation)}" placeholder="Ej. Universidad de Alcalá">
+    </div>
+    <div class="field">
+      <label>Colaboradores / Partners (opcional)</label>
+      <input type="text" id="fPartners" value="${escapeAttr(data.partners)}" placeholder="Ej. Ayuntamiento de Madrid">
+    </div>
 
     <div class="field">
       <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
@@ -907,6 +1303,10 @@ function renderForm(app) {
       gallery: document.getElementById('fGallery').value.split('\n').map(s => s.trim()).filter(Boolean),
       mapUrl: document.getElementById('fMapUrl').value.trim(),
       pdfUrl: document.getElementById('fPdfUrl').value.trim(),
+      codeUrl: document.getElementById('fCodeUrl').value.trim(),
+      supervisor: document.getElementById('fSupervisor').value.trim(),
+      affiliation: document.getElementById('fAffiliation').value.trim(),
+      partners: document.getElementById('fPartners').value.trim(),
       featured: document.getElementById('fFeatured').checked
     };
     const ok = await saveProjectToCloud(record);
