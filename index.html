@@ -97,15 +97,12 @@
     transition: border-color 0.2s ease, transform 0.2s ease;
   }
   .tile:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .tile img { width: 100%; display: block; transition: filter 0.25s ease; }
-  .tile:hover img { filter: brightness(0.5); }
+  .tile img { width: 100%; display: block; }
   .tile-noimg { aspect-ratio: 4/5; display:flex; align-items:center; justify-content:center; color: var(--muted); font-size: 0.75rem; padding: 16px; text-align:center; }
   .tile-overlay {
-    position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 12px 10px 12px;
-    background: linear-gradient(transparent, rgba(0,0,0,0.9));
-    opacity: 0; transition: opacity 0.25s ease;
+    padding: 12px 14px 14px 14px;
+    background: var(--card2);
   }
-  .tile:hover .tile-overlay { opacity: 1; }
   .tile-title { font-size: 0.95rem; font-weight: 700; line-height: 1.25; }
   .tile-cat { font-size: 0.68rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 3px; }
   .empty-state { text-align: center; color: var(--muted); padding: 70px 20px; font-size: 0.9rem; }
@@ -145,7 +142,7 @@
   }
   .case-section-title { font-size: 1.05rem; font-weight: 700; margin: 26px 0 12px 0; }
   .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .gallery-grid img { width: 100%; border-radius: 10px; display: block; aspect-ratio: 1/1; object-fit: contain; background: var(--card2); cursor: pointer; transition: opacity 0.2s ease; }
+  .gallery-grid img { width: 100%; height: auto; border-radius: 10px; display: block; cursor: pointer; transition: opacity 0.2s ease; }
   .gallery-grid img:hover { opacity: 0.85; }
   .map-embed-wrap {
     border-radius: 14px; overflow: hidden; border: 1px solid var(--border); background: var(--card);
@@ -342,7 +339,7 @@
     border-radius: 18px; overflow: hidden; background: var(--card);
   }
   @media (min-width: 720px) { .carousel-slide { grid-template-columns: 1.1fr 1fr; } }
-  .carousel-img { width: 100%; max-height: 420px; object-fit: contain; display: block; background: var(--card2); }
+  .carousel-img { width: 100%; height: auto; display: block; }
   .carousel-info { padding: 26px 26px 30px 26px; display: flex; flex-direction: column; justify-content: center; }
   .carousel-cat { color: var(--accent); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
   .carousel-title { font-size: 1.35rem; font-weight: 800; margin: 8px 0 10px 0; }
@@ -413,10 +410,17 @@
   .latest-work-grid { display: flex; flex-direction: column; gap: 30px; }
   @media (min-width: 900px) { .latest-work-grid { flex-direction: row; align-items: center; } }
   .teaser-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; flex: 1.3; }
-  .teaser-tile { border-radius: 10px; overflow: hidden; aspect-ratio: 1/1; background: var(--card); border: 1px solid var(--border); cursor: pointer; }
-  .teaser-tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s ease; }
-  .teaser-tile:hover img { transform: scale(1.08); }
+  .teaser-tile { border-radius: 10px; overflow: hidden; aspect-ratio: 1/1; background: var(--card); border: 1px solid var(--border); cursor: pointer; position: relative; }
+  .teaser-tile img { width: 100%; height: 100%; object-fit: contain; display: block; transition: transform 0.3s ease, filter 0.25s ease; background: var(--card2); }
+  .teaser-tile:hover img { transform: scale(1.06); filter: brightness(0.45); }
   .teaser-tile-noimg { width: 100%; height: 100%; }
+  .teaser-tile-overlay {
+    position: absolute; inset: 0; display: flex; align-items: flex-end;
+    padding: 8px; background: linear-gradient(transparent 40%, rgba(0,0,0,0.65));
+    opacity: 0; transition: opacity 0.25s ease;
+  }
+  .teaser-tile:hover .teaser-tile-overlay { opacity: 1; }
+  .teaser-tile-title { font-weight: 300; font-size: 0.72rem; line-height: 1.25; color: #fff; letter-spacing: 0.1px; }
   .latest-work-info { flex: 1; text-align: center; }
   @media (min-width: 900px) { .latest-work-info { text-align: left; } }
 
@@ -443,8 +447,8 @@
     max-width: 1400px; margin: 0 auto;
   }
   @media (min-width: 900px) { .detail-hero-section { flex-direction: row; align-items: stretch; min-height: 60vh; } }
-  .detail-media { flex: 1.3; background: var(--card); display: flex; align-items: center; justify-content: center; min-height: 320px; }
-  .detail-media-img { width: 100%; height: 100%; object-fit: contain; display: block; min-height: 320px; max-height: 70vh; background: var(--card2); }
+  .detail-media { flex: 1.3; background: var(--card); display: flex; align-items: center; justify-content: center; }
+  .detail-media-img { width: 100%; height: auto; max-height: 80vh; object-fit: contain; display: block; }
   .detail-media-embed { width: 100%; height: 100%; min-height: 420px; }
   .detail-media-embed iframe { width: 100%; height: 100%; min-height: 420px; border: none; display: block; }
   .detail-media-noimg { color: var(--muted); padding: 60px; }
@@ -802,6 +806,7 @@ function renderHome(app) {
     latestGridHtml = `<div class="teaser-grid">` + latest.map(p => `
       <div class="teaser-tile" data-id="${p.id}">
         ${p.cover ? `<img src="${p.cover}" alt="">` : `<div class="teaser-tile-noimg"></div>`}
+        <div class="teaser-tile-overlay"><div class="teaser-tile-title">${escapeHtml(p.title)}</div></div>
       </div>
     `).join('') + `</div>`;
   }
@@ -878,9 +883,9 @@ function shortenText(text, maxLen) {
 
 function siteFooterHtml(profile) {
   let contactLinks = "";
-  if (profile.linkedin) contactLinks += `<a class="contact-link" href="${escapeAttr(profile.linkedin)}" target="_blank" rel="noopener">LinkedIn</a>`;
+  if (profile.linkedin) contactLinks += `<a class="contact-link" href="${escapeAttr(normalizeUrl(profile.linkedin))}" target="_blank" rel="noopener">LinkedIn</a>`;
   if (profile.email) contactLinks += `<a class="contact-link" href="mailto:${escapeAttr(profile.email)}">${escapeHtml(profile.email)}</a>`;
-  if (profile.github) contactLinks += `<a class="contact-link" href="${escapeAttr(profile.github)}" target="_blank" rel="noopener">GitHub</a>`;
+  if (profile.github) contactLinks += `<a class="contact-link" href="${escapeAttr(normalizeUrl(profile.github))}" target="_blank" rel="noopener">GitHub</a>`;
   return `
     <section class="contact-section">
       ${contactLinks ? `<div class="contact-links">${contactLinks}</div>` : ""}
