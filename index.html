@@ -384,6 +384,17 @@
   }
   .contact-link:hover { border-color: var(--accent-bright); transform: translateY(-1px); }
   .site-footer { text-align: center; color: var(--muted); font-size: 0.75rem; padding: 30px 14px 10px 14px; }
+  .admin-gear-btn {
+    position: fixed; left: 14px; bottom: calc(14px + env(safe-area-inset-bottom));
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--card2); border: 1px solid var(--border);
+    color: var(--muted); opacity: 0.4;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.2s ease, color 0.2s ease;
+    z-index: 40;
+  }
+  .admin-gear-btn:hover { opacity: 1; color: var(--accent-bright); }
+  .admin-gear-btn.active { opacity: 0.85; color: var(--accent); border-color: var(--accent); }
   .nav-link.active { color: var(--accent-bright); }
   .nav-link.active::after { right: 0; background: var(--accent-bright); }
 
@@ -481,7 +492,14 @@
 </head>
 <body>
 
-<div id="toast">✅ <span id="toastText">Guardado</span></div>
+<div id="toast"><span id="toastText">Guardado</span></div>
+
+<button id="adminGearBtn" class="admin-gear-btn" aria-label="Modo edición">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"></circle>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+  </svg>
+</button>
 
 <div id="lightbox" class="lightbox" style="display:none;">
   <button class="lightbox-close" id="lightboxClose">✕</button>
@@ -525,8 +543,12 @@ const ADMIN_CODE_KEY = "portfoliogis:admincode";
 function getAdminCode() { return localStorage.getItem(ADMIN_CODE_KEY) || ""; }
 function isAdmin() { return !!getAdminCode(); }
 
+function updateAdminGearBtn() {
+  document.getElementById('adminGearBtn').classList.toggle('active', isAdmin());
+}
+
 async function tryUnlockAdmin() {
-  if (!supabaseClient) { showToast("⚠️ Base de datos no configurada todavía"); return; }
+  if (!supabaseClient) { showToast("Base de datos no configurada todavía"); return; }
   const code = window.prompt("Introduce tu código de administrador:");
   if (!code) return;
   try {
@@ -534,19 +556,21 @@ async function tryUnlockAdmin() {
     if (error) throw error;
     if (data === true) {
       localStorage.setItem(ADMIN_CODE_KEY, code);
-      showToast("🔓 Modo edición activado en este dispositivo");
+      showToast("Modo edición activado en este dispositivo");
+      updateAdminGearBtn();
       render();
     } else {
-      showToast("⚠️ Código incorrecto");
+      showToast("Código incorrecto");
     }
   } catch (e) {
     console.error(e);
-    showToast("⚠️ No se pudo comprobar el código");
+    showToast("No se pudo comprobar el código");
   }
 }
 function lockAdmin() {
   localStorage.removeItem(ADMIN_CODE_KEY);
-  showToast("🔒 Edición desactivada en este dispositivo");
+  showToast("Edición desactivada en este dispositivo");
+  updateAdminGearBtn();
   render();
 }
 
@@ -582,14 +606,14 @@ async function fetchProjectsFromCloud() {
 }
 
 async function saveProjectToCloud(record) {
-  if (!supabaseClient) { showToast("⚠️ Base de datos no configurada"); return false; }
+  if (!supabaseClient) { showToast("Base de datos no configurada"); return false; }
   try {
     const { error } = await supabaseClient.rpc('admin_save_project', { p_passcode: getAdminCode(), p_project: record });
     if (error) throw error;
     return true;
   } catch (e) {
     console.error(e);
-    showToast("⚠️ No se pudo guardar (revisa tu código o conexión)");
+    showToast("No se pudo guardar (revisa tu código o conexión)");
     return false;
   }
 }
@@ -601,7 +625,7 @@ async function deleteProjectFromCloud(id) {
     return true;
   } catch (e) {
     console.error(e);
-    showToast("⚠️ No se pudo eliminar (revisa tu código o conexión)");
+    showToast("No se pudo eliminar (revisa tu código o conexión)");
     return false;
   }
 }
@@ -643,14 +667,14 @@ async function fetchProfileFromCloud() {
   }
 }
 async function saveProfileToCloud(profile) {
-  if (!supabaseClient) { showToast("⚠️ Base de datos no configurada"); return false; }
+  if (!supabaseClient) { showToast("Base de datos no configurada"); return false; }
   try {
     const { error } = await supabaseClient.rpc('admin_save_profile', { p_passcode: getAdminCode(), p_profile: profile });
     if (error) throw error;
     return true;
   } catch (e) {
     console.error(e);
-    showToast("⚠️ No se pudo guardar el perfil (revisa tu código o conexión)");
+    showToast("No se pudo guardar el perfil (revisa tu código o conexión)");
     return false;
   }
 }
@@ -754,15 +778,11 @@ function navBarHtml(activeView) {
         <div class="nav-links">
           ${links.map(l => `<a class="nav-link ${activeView === l.id ? 'active' : ''}" data-nav="${l.id}">${l.label}</a>`).join('')}
         </div>
-        <button class="admin-pill" id="adminBtnNav">${isAdmin() ? "🔓 Edición" : "🔒"}</button>
       </div>
     </nav>
   `;
 }
 function wireNavBar(app, activeView) {
-  document.getElementById('adminBtnNav').addEventListener('click', () => {
-    if (isAdmin()) { lockAdmin(); } else { tryUnlockAdmin(); }
-  });
   app.querySelectorAll('[data-nav]').forEach(el => {
     el.addEventListener('click', () => {
       const target = el.dataset.nav;
@@ -894,8 +914,11 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('.contact-link-email');
   if (btn) {
-    navigator.clipboard.writeText(btn.dataset.email).then(() => showToast("📋 Email copiado al portapapeles"));
+    navigator.clipboard.writeText(btn.dataset.email).then(() => showToast("Email copiado al portapapeles"));
   }
+});
+document.getElementById('adminGearBtn').addEventListener('click', () => {
+  if (isAdmin()) { lockAdmin(); } else { tryUnlockAdmin(); }
 });
 
 function normalizeUrl(u) {
@@ -1208,7 +1231,7 @@ function renderDetail(app) {
     if (!confirm("¿Eliminar este proyecto? No se puede deshacer.")) return;
     const ok = await deleteProjectFromCloud(p.id);
     if (!ok) return;
-    showToast("🗑️ Proyecto eliminado");
+    showToast("Proyecto eliminado");
     currentView = "portfolio";
     await fetchProjectsFromCloud();
     render();
@@ -1344,7 +1367,7 @@ function renderProfileForm(app) {
     if (!ok) return;
     profileMemory = profile;
     saveProfileCache(profile);
-    showToast("✅ Perfil actualizado");
+    showToast("Perfil actualizado");
     currentView = "home";
     render();
   });
@@ -1484,7 +1507,7 @@ function renderForm(app) {
 
   document.getElementById('saveBtn').addEventListener('click', async () => {
     const title = document.getElementById('fTitle').value.trim();
-    if (!title) { showToast("⚠️ Falta el título del proyecto"); return; }
+    if (!title) { showToast("Falta el título del proyecto"); return; }
     const record = {
       id: existing ? existing.id : uid(),
       title,
@@ -1506,7 +1529,7 @@ function renderForm(app) {
     };
     const ok = await saveProjectToCloud(record);
     if (!ok) return;
-    showToast(existing ? "✅ Proyecto actualizado" : "✅ Proyecto añadido");
+    showToast(existing ? "Proyecto actualizado" : "Proyecto añadido");
     viewingId = record.id;
     currentView = "detail"; editingId = null;
     await fetchProjectsFromCloud();
@@ -1518,7 +1541,7 @@ function renderForm(app) {
       if (!confirm("¿Eliminar este proyecto? No se puede deshacer.")) return;
       const ok = await deleteProjectFromCloud(existing.id);
       if (!ok) return;
-      showToast("🗑️ Proyecto eliminado");
+      showToast("Proyecto eliminado");
       currentView = "home"; editingId = null;
       await fetchProjectsFromCloud();
       render();
@@ -1529,6 +1552,7 @@ function renderForm(app) {
 /* Init */
 try {
   render();
+  updateAdminGearBtn();
   fetchProjectsFromCloud();
   fetchProfileFromCloud();
 } catch (e) {
