@@ -589,9 +589,12 @@ function escapeHtml(str) {
 }
 function escapeAttr(str) { return (str || "").replace(/"/g, "&quot;"); }
 function toEmbedUrl(url) {
-  // Convierte enlaces de Google Drive de "ver" a "preview" embebible
   const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
   if (driveMatch) return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]+)/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
   return url;
 }
 
@@ -1004,8 +1007,11 @@ function renderDetail(app) {
 
   const dateLabel = p.date ? new Date(p.date + "T00:00:00").toLocaleDateString('es-ES', { year: 'numeric', month: 'long' }) : "";
   const hasMap = !!p.mapUrl;
+  const hasVideo = !!p.videoUrl;
   const mainVisualHtml = hasMap
     ? `<div class="detail-media-embed"><iframe src="${escapeAttr(toEmbedUrl(p.mapUrl))}" loading="lazy" allowfullscreen></iframe></div>`
+    : hasVideo
+    ? `<div class="detail-media-embed"><iframe src="${escapeAttr(toEmbedUrl(p.videoUrl))}" loading="lazy" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe></div>`
     : (p.cover ? `<img class="detail-media-img" src="${p.cover}" alt="">` : `<div class="detail-media-noimg">Sin imagen</div>`);
 
   const infoRows = [];
@@ -1040,6 +1046,7 @@ function renderDetail(app) {
         ${p.pdfUrl ? `<a class="pdf-btn" href="${escapeAttr(p.pdfUrl)}" target="_blank" rel="noopener">📄 Documento PDF</a>` : ""}
         ${p.codeUrl ? `<a class="pdf-btn" href="${escapeAttr(p.codeUrl)}" target="_blank" rel="noopener">💻 Código del proyecto</a>` : ""}
         ${hasMap && p.cover ? `<a class="pdf-btn" href="${escapeAttr(p.mapUrl)}" target="_blank" rel="noopener">🗺️ Abrir mapa en pestaña nueva</a>` : ""}
+        ${hasVideo && hasMap ? `<a class="pdf-btn" href="${escapeAttr(p.videoUrl)}" target="_blank" rel="noopener">🎬 Ver vídeo</a>` : ""}
       </div>
       ${isAdmin() ? `
       <div class="edit-row">
@@ -1212,7 +1219,7 @@ function renderProfileForm(app) {
 function renderForm(app) {
   const projects = loadProjects();
   const existing = editingId ? projects.find(p => p.id === editingId) : null;
-  const data = existing || { title: "", category: "", date: "", description: "", techStack: [], cover: "", gallery: [], mapUrl: "", pdfUrl: "", codeUrl: "", supervisor: "", affiliation: "", partners: "", featured: false };
+  const data = existing || { title: "", category: "", date: "", description: "", techStack: [], cover: "", gallery: [], mapUrl: "", videoUrl: "", pdfUrl: "", codeUrl: "", supervisor: "", affiliation: "", partners: "", featured: false };
 
   const categories = Array.from(new Set(projects.map(p => p.category).filter(Boolean)));
 
@@ -1253,6 +1260,10 @@ function renderForm(app) {
     <div class="field">
       <label>Enlace del mapa interactivo (opcional)</label>
       <input type="url" id="fMapUrl" value="${escapeAttr(data.mapUrl)}" placeholder="https://...">
+    </div>
+    <div class="field">
+      <label>Enlace del vídeo (YouTube, Vimeo... opcional)</label>
+      <input type="url" id="fVideoUrl" value="${escapeAttr(data.videoUrl)}" placeholder="https://youtube.com/watch?v=...">
     </div>
     <div class="field">
       <label>Enlace al PDF (opcional)</label>
@@ -1306,6 +1317,7 @@ function renderForm(app) {
       cover: document.getElementById('fCover').value.trim(),
       gallery: document.getElementById('fGallery').value.split('\n').map(s => s.trim()).filter(Boolean),
       mapUrl: document.getElementById('fMapUrl').value.trim(),
+      videoUrl: document.getElementById('fVideoUrl').value.trim(),
       pdfUrl: document.getElementById('fPdfUrl').value.trim(),
       codeUrl: document.getElementById('fCodeUrl').value.trim(),
       supervisor: document.getElementById('fSupervisor').value.trim(),
