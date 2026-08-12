@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Portfolio GIS</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#122c4f">
+<meta name="theme-color" content="#141414">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Portfolio GIS">
@@ -16,20 +16,20 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --bg: #122c4f;
-    --card: #0d1b30;
-    --card2: #0a1526;
-    --border: #24405c;
-    --text: #fbf9e4;
-    --muted: #9db3c9;
-    --accent: #5b88b2;
-    --accent-bright: #7aa5c9;
-    --accent-soft: rgba(91,136,178,0.16);
-    --beige: #fbf9e4;
-    --navy: #122c4f;
+    --bg: #141414;
+    --card: #1f382d;
+    --card2: #17281f;
+    --border: #2e4a3c;
+    --text: #ece4df;
+    --muted: #a8a099;
+    --accent: #ff5f14;
+    --accent-bright: #ff7a3d;
+    --accent-soft: rgba(255,95,20,0.16);
+    --beige: #ece4df;
+    --navy: #1f382d;
     --red: #e2665a;
   }
-  html { background: #122c4f; overflow-x: hidden; }
+  html { background: #141414; overflow-x: hidden; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
     margin: 0;
@@ -105,7 +105,7 @@
     position: fixed; right: calc(20px + env(safe-area-inset-right)); bottom: calc(24px + env(safe-area-inset-bottom));
     width: 58px; height: 58px; border-radius: 50%;
     background: var(--accent); color: #fff; font-size: 1.8rem; font-weight: 700;
-    border: none; box-shadow: 0 8px 24px rgba(91,136,178,0.4);
+    border: none; box-shadow: 0 8px 24px rgba(255,95,20,0.4);
     display: flex; align-items: center; justify-content: center; line-height: 0;
     transition: background 0.2s ease, transform 0.15s ease;
   }
@@ -204,10 +204,11 @@
   /* ---- Site nav ---- */
   .site-nav {
     position: sticky; top: 0;
-    width: 100vw; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
     margin-top: calc(-14px - env(safe-area-inset-top));
     z-index: 50;
-    background: rgba(3,3,3,0.86);
+    background: rgba(20,20,20,0.9);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border);
   }
@@ -252,13 +253,13 @@
   }
   .hero-bg::after {
     content: ""; position: absolute; inset: 0;
-    background: linear-gradient(100deg, var(--card) 0%, rgba(13,27,48,0.55) 30%, rgba(91,136,178,0.18) 100%);
+    background: linear-gradient(100deg, var(--card) 0%, rgba(31,56,45,0.55) 30%, rgba(255,95,20,0.18) 100%);
   }
   @media (max-width: 720px) { .hero-bg { left: 0; opacity: 0.35; } }
   .hero-card {
     position: relative; z-index: 2;
     max-width: 560px; margin: 40px 0 40px 4px;
-    background: rgba(13,27,48,0.82);
+    background: rgba(20,20,20,0.85);
     backdrop-filter: blur(6px);
     border: 1px solid var(--border);
     border-radius: 14px;
