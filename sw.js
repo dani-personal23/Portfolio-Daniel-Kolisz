@@ -1,4 +1,4 @@
-const CACHE_NAME = "candidaturas-cache-v2";
+const CACHE_NAME = "portfoliogis-cache-v1";
 const ASSETS = [
   "./",
   "./index.html",
@@ -25,8 +25,7 @@ self.addEventListener("activate", (event) => {
 });
 
 /* Estrategia "stale-while-revalidate": la app se abre AL INSTANTE con la
-   copia guardada (nunca depende de que la red responda a tiempo), y en
-   segundo plano se descarga la version mas reciente para la proxima vez. */
+   copia guardada, y en segundo plano se descarga la version mas reciente. */
 self.addEventListener("fetch", (event) => {
   if (event.request.mode === "navigate") {
     event.respondWith(
