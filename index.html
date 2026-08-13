@@ -134,7 +134,7 @@
   .case-cat { color: var(--accent); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
   .case-title { font-size: 1.6rem; font-weight: 800; margin: 6px 0 4px 0; line-height: 1.2; }
   .case-date { color: var(--muted); font-size: 0.8rem; margin-bottom: 16px; }
-  .case-desc { font-size: 0.98rem; line-height: 1.7; color: #e3e3df; white-space: pre-wrap; margin-bottom: 18px; }
+  .case-desc { font-size: 0.98rem; line-height: 1.7; color: #e3e3df; margin-bottom: 18px; }
   .tech-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 22px; }
   .tech-chip {
     background: var(--card); border: 1px solid var(--border); border-radius: 20px;
@@ -167,6 +167,27 @@
   }
   .field textarea { resize: vertical; min-height: 90px; }
   .field input:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
+  .rte-toolbar {
+    display: flex; align-items: center; gap: 6px; background: var(--card2);
+    border: 1px solid var(--border); border-bottom: none;
+    border-radius: 10px 10px 0 0; padding: 8px;
+  }
+  .rte-btn {
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 6px 10px; font-size: 0.78rem; font-family: inherit; cursor: pointer;
+  }
+  .rte-btn:hover { border-color: var(--accent-bright); }
+  .rte-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+  .rte-editor {
+    width: 100%; min-height: 140px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 0 0 10px 10px;
+    padding: 11px 12px; font-size: 0.9rem; color: var(--text); font-family: inherit;
+    line-height: 1.5;
+  }
+  .rte-editor:focus { outline: none; border-color: var(--accent); }
+  .rte-editor ul, .rte-editor ol { padding-left: 22px; margin: 6px 0; }
+  .case-desc ul, .case-desc ol { padding-left: 22px; margin: 10px 0; }
+  .case-desc li { margin-bottom: 4px; }
   .upload-box {
     border: 1.5px dashed var(--border); border-radius: 14px; padding: 20px; text-align: center;
     color: var(--muted); font-size: 0.82rem; cursor: pointer;
@@ -921,6 +942,35 @@ document.getElementById('adminGearBtn').addEventListener('click', () => {
   if (isAdmin()) { lockAdmin(); } else { tryUnlockAdmin(); }
 });
 
+function stripHtmlToText(html) {
+  const div = document.createElement("div");
+  div.innerHTML = html || "";
+  return div.textContent || "";
+}
+
+function sanitizeRichText(html) {
+  const allowed = new Set(["B", "STRONG", "I", "EM", "U", "UL", "OL", "LI", "BR", "P", "DIV"]);
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html || "";
+  function clean(node) {
+    Array.from(node.childNodes).forEach((child) => {
+      if (child.nodeType === 1) {
+        if (!allowed.has(child.tagName)) {
+          while (child.firstChild) node.insertBefore(child.firstChild, child);
+          node.removeChild(child);
+        } else {
+          Array.from(child.attributes).forEach((attr) => child.removeAttribute(attr.name));
+          clean(child);
+        }
+      } else if (child.nodeType !== 3) {
+        node.removeChild(child);
+      }
+    });
+  }
+  clean(wrapper);
+  return wrapper.innerHTML;
+}
+
 function normalizeUrl(u) {
   if (!u) return u;
   if (!/^https?:\/\//i.test(u)) return "https://" + u;
@@ -959,7 +1009,7 @@ function renderCarousel(featured) {
         <div class="carousel-info">
           ${p.category ? `<div class="carousel-cat">${escapeHtml(p.category)}</div>` : ""}
           <div class="carousel-title serif">${escapeHtml(p.title)}</div>
-          <div class="carousel-desc">${escapeHtml(shortenText(p.description || "", 200))}</div>
+          <div class="carousel-desc">${escapeHtml(shortenText(stripHtmlToText(p.description || ""), 200))}</div>
           <a class="carousel-link" data-id="${p.id}">Ver proyecto completo →</a>
         </div>
       </div>
@@ -1192,7 +1242,7 @@ function renderDetail(app) {
     </section>` : ""}
 
     <section class="page-section" id="accordionContent" style="display:none;">
-      ${p.description ? `<p class="case-desc">${escapeHtml(p.description)}</p>` : ""}
+      ${p.description ? `<div class="case-desc">${sanitizeRichText(p.description)}</div>` : ""}
       ${p.techStack && p.techStack.length ? `<div class="tech-row">${p.techStack.map(t => `<span class="tech-chip">${escapeHtml(t)}</span>`).join('')}</div>` : ""}
       ${p.gallery && p.gallery.length ? `<div class="case-section-title">Galería</div><div class="gallery-grid">${p.gallery.map((g, i) => { const item = typeof g === "string" ? { url: g, title: "" } : g; return `<div class="gallery-card"><img src="${item.url}" alt="" class="gallery-img-click" data-idx="${i}">${item.title ? `<div class="gallery-card-title">${escapeHtml(item.title)}</div>` : ""}</div>`; }).join('')}</div>` : ""}
       ${(p.codeBlocks && p.codeBlocks.length) ? p.codeBlocks.map(cb => `<div class="case-section-title">${escapeHtml(cb.title || "Código")}</div><pre class="code-block"><code>${escapeHtml(cb.code)}</code></pre>`).join('') : (p.codeSnippet ? `<div class="case-section-title">Código</div><pre class="code-block"><code>${escapeHtml(p.codeSnippet)}</code></pre>` : "")}
@@ -1402,7 +1452,15 @@ function renderForm(app) {
     </div>
     <div class="field">
       <label>Explicación / metodología utilizada</label>
-      <textarea id="fDesc" placeholder="Qué herramientas y proceso seguiste...">${escapeHtml(data.description)}</textarea>
+      <div class="rte-toolbar">
+        <button type="button" class="rte-btn" data-cmd="bold" title="Negrita"><b>N</b></button>
+        <button type="button" class="rte-btn" data-cmd="italic" title="Cursiva"><i>C</i></button>
+        <button type="button" class="rte-btn" data-cmd="underline" title="Subrayado"><u>S</u></button>
+        <span class="rte-sep"></span>
+        <button type="button" class="rte-btn" data-cmd="insertUnorderedList" title="Lista con viñetas">• Lista</button>
+        <button type="button" class="rte-btn" data-cmd="insertOrderedList" title="Lista numerada">1. Lista</button>
+      </div>
+      <div id="fDesc" class="rte-editor" contenteditable="true">${sanitizeRichText(data.description || "")}</div>
     </div>
     <div class="field">
       <label>Tecnologías (separadas por comas)</label>
@@ -1505,6 +1563,15 @@ function renderForm(app) {
   renderCodeBlocksUI();
   document.getElementById('addCodeBlockBtn').addEventListener('click', () => { codeBlocksData.push({ title: "", code: "" }); renderCodeBlocksUI(); });
 
+  const descEditor = document.getElementById('fDesc');
+  document.querySelectorAll('.rte-btn').forEach(btn => {
+    btn.addEventListener('mousedown', (e) => e.preventDefault());
+    btn.addEventListener('click', () => {
+      descEditor.focus();
+      document.execCommand(btn.dataset.cmd, false, null);
+    });
+  });
+
   document.getElementById('saveBtn').addEventListener('click', async () => {
     const title = document.getElementById('fTitle').value.trim();
     if (!title) { showToast("Falta el título del proyecto"); return; }
@@ -1513,7 +1580,7 @@ function renderForm(app) {
       title,
       category: document.getElementById('fCategory').value.trim(),
       date: document.getElementById('fDate').value || "",
-      description: document.getElementById('fDesc').value.trim(),
+      description: sanitizeRichText(document.getElementById('fDesc').innerHTML),
       techStack: document.getElementById('fTech').value.split(',').map(s => s.trim()).filter(Boolean),
       cover: document.getElementById('fCover').value.trim(),
       gallery: galleryData.filter(g => g.url && g.url.trim()).map(g => ({ url: g.url.trim(), title: g.title.trim() })),
