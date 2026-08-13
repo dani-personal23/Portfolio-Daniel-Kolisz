@@ -560,6 +560,15 @@ try {
   }
 } catch (e) { console.error("Supabase no configurado todavía", e); }
 
+const CATEGORIES = ["GIS", "Teledetección", "Web mapping", "Estadística"];
+function getProjectCategories(p) {
+  if (p.categories && p.categories.length) return p.categories;
+  if (p.category) {
+    return CATEGORIES.filter(c => p.category.toLowerCase().includes(c.toLowerCase()));
+  }
+  return [];
+}
+
 const ADMIN_CODE_KEY = "portfoliogis:admincode";
 function getAdminCode() { return localStorage.getItem(ADMIN_CODE_KEY) || ""; }
 function isAdmin() { return !!getAdminCode(); }
@@ -1007,7 +1016,7 @@ function renderCarousel(featured) {
       <div class="carousel-slide" data-id="${p.id}">
         ${p.cover ? `<img class="carousel-img" src="${p.cover}" alt="">` : `<div class="carousel-img"></div>`}
         <div class="carousel-info">
-          ${p.category ? `<div class="carousel-cat">${escapeHtml(p.category)}</div>` : ""}
+          ${getProjectCategories(p).length ? `<div class="carousel-cat">${escapeHtml(getProjectCategories(p).join(', '))}</div>` : ""}
           <div class="carousel-title serif">${escapeHtml(p.title)}</div>
           <div class="carousel-desc">${escapeHtml(shortenText(stripHtmlToText(p.description || ""), 200))}</div>
           <a class="carousel-link" data-id="${p.id}">Ver proyecto completo →</a>
@@ -1044,16 +1053,15 @@ function renderCarousel(featured) {
 function renderPortfolioView(app) {
   const projects = loadProjects();
   const profile = loadProfile();
-  const categories = Array.from(new Set(projects.map(p => p.category).filter(Boolean)));
 
   let filterHtml = `<div class="filter-row" style="justify-content:center;">`;
   filterHtml += `<button class="filter-chip ${activeFilter === 'todas' ? 'active' : ''}" data-filter="todas">Todas</button>`;
-  categories.forEach(c => {
+  CATEGORIES.forEach(c => {
     filterHtml += `<button class="filter-chip ${activeFilter === c ? 'active' : ''}" data-filter="${escapeAttr(c)}">${escapeHtml(c)}</button>`;
   });
   filterHtml += `</div>`;
 
-  const filtered = activeFilter === "todas" ? projects : projects.filter(p => p.category === activeFilter);
+  const filtered = activeFilter === "todas" ? projects : projects.filter(p => getProjectCategories(p).includes(activeFilter));
   const sorted = filtered.slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
   let gridHtml;
@@ -1068,7 +1076,6 @@ function renderPortfolioView(app) {
           ${img ? `<img src="${img}" alt="">` : `<div class="tile-noimg">${escapeHtml(p.title)}</div>`}
           <div class="tile-overlay">
             <div class="tile-title">${escapeHtml(p.title)}</div>
-            ${p.category ? `<div class="tile-cat">${escapeHtml(p.category)}</div>` : ""}
           </div>
         </div>
       `;
@@ -1227,7 +1234,7 @@ function renderDetail(app) {
     <section class="detail-hero-section">
       <div class="detail-media">${mainVisualHtml}</div>
       <div class="detail-side">
-        ${p.category ? `<div class="case-cat">${escapeHtml(p.category)}</div>` : ""}
+        ${getProjectCategories(p).length ? `<div class="case-cat">${escapeHtml(getProjectCategories(p).join(', '))}</div>` : ""}
         <div class="detail-title serif">${escapeHtml(p.title)}</div>
         ${dateLabel ? `<div class="case-date">${dateLabel}</div>` : ""}
         <button class="hero-cta" id="toggleAccordion">Leer proyecto completo</button>
@@ -1426,7 +1433,7 @@ function renderProfileForm(app) {
 function renderForm(app) {
   const projects = loadProjects();
   const existing = editingId ? projects.find(p => p.id === editingId) : null;
-  const data = existing || { title: "", category: "", date: "", description: "", techStack: [], cover: "", gallery: [], mapUrl: "", videoUrl: "", pdfUrl: "", codeUrl: "", codeBlocks: [], supervisor: "", affiliation: "", partners: "", featured: false };
+  const data = existing || { title: "", categories: [], date: "", description: "", techStack: [], cover: "", gallery: [], mapUrl: "", videoUrl: "", pdfUrl: "", codeUrl: "", codeBlocks: [], supervisor: "", affiliation: "", partners: "", featured: false };
 
   let codeBlocksData = (data.codeBlocks && data.codeBlocks.length)
     ? data.codeBlocks.map(cb => ({ title: cb.title || "", code: cb.code || "" }))
@@ -1434,7 +1441,7 @@ function renderForm(app) {
 
   let galleryData = (data.gallery || []).map(g => typeof g === "string" ? { url: g, title: "" } : { url: g.url || "", title: g.title || "" });
 
-  const categories = Array.from(new Set(projects.map(p => p.category).filter(Boolean)));
+  const projectCategoriesInit = getProjectCategories(data);
 
   app.innerHTML = `
     <div class="field">
@@ -1442,9 +1449,10 @@ function renderForm(app) {
       <input type="text" id="fTitle" value="${escapeAttr(data.title)}" placeholder="Ej. NDVI vs temperatura en el Retiro">
     </div>
     <div class="field">
-      <label>Categoría</label>
-      <input type="text" id="fCategory" list="catList" value="${escapeAttr(data.category)}" placeholder="Ej. Teledetección, LiDAR, Solar...">
-      <datalist id="catList">${categories.map(c => `<option value="${escapeAttr(c)}">`).join('')}</datalist>
+      <label>Categorías (puedes elegir varias)</label>
+      <div class="filter-row" id="catSelectRow" style="margin-bottom:0;">
+        ${CATEGORIES.map(c => `<button type="button" class="filter-chip cat-chip ${projectCategoriesInit.includes(c) ? 'active' : ''}" data-cat="${c}">${c}</button>`).join('')}
+      </div>
     </div>
     <div class="field">
       <label>Fecha (aprox.)</label>
@@ -1563,6 +1571,20 @@ function renderForm(app) {
   renderCodeBlocksUI();
   document.getElementById('addCodeBlockBtn').addEventListener('click', () => { codeBlocksData.push({ title: "", code: "" }); renderCodeBlocksUI(); });
 
+  let selectedCategories = projectCategoriesInit.slice();
+  document.querySelectorAll('.cat-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const cat = chip.dataset.cat;
+      if (selectedCategories.includes(cat)) {
+        selectedCategories = selectedCategories.filter(c => c !== cat);
+        chip.classList.remove('active');
+      } else {
+        selectedCategories.push(cat);
+        chip.classList.add('active');
+      }
+    });
+  });
+
   const descEditor = document.getElementById('fDesc');
   document.querySelectorAll('.rte-btn').forEach(btn => {
     btn.addEventListener('mousedown', (e) => e.preventDefault());
@@ -1578,7 +1600,7 @@ function renderForm(app) {
     const record = {
       id: existing ? existing.id : uid(),
       title,
-      category: document.getElementById('fCategory').value.trim(),
+      categories: selectedCategories,
       date: document.getElementById('fDate').value || "",
       description: sanitizeRichText(document.getElementById('fDesc').innerHTML),
       techStack: document.getElementById('fTech').value.split(',').map(s => s.trim()).filter(Boolean),
